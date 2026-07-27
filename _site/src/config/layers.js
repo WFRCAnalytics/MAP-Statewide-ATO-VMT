@@ -2,21 +2,16 @@ export const MAP_LAYER_DEFS = [
   {
     id: 'ato-fill',
     label: 'ATO Accessibility',
-    help: 'Future CO_TAZID accessibility surface. This layer is empty until ATO tiles or GeoJSON are added.',
+    help: 'CO_TAZID accessibility surface from the processed PMTiles archive.',
   },
   {
     id: 'taz-outline',
     label: 'TAZ Outlines',
-    help: 'Boundary outlines for the future CO_TAZID geometries.',
+    help: 'Light TAZ boundary overlay styled to match the reference app.',
   },
   {
     id: 'major-roads',
     label: 'Major Roads',
-    help: 'Major roads from the current basemap style.',
-  },
-  {
-    id: 'pmtiles-ato',
-    label: 'PMTiles Source',
-    help: 'Turns on the future PMTiles-backed ATO vector tile layer when a PMTiles URL is configured.',
+    help: 'Optional major roads layer. Basemap roads are hidden so TAZ boundaries stay readable.',
   },
 ]

@@ -1,0 +1,158 @@
+{
+  "generated_at": "2026-07-27T21:09:19.512153+00:00",
+  "model_areas": [
+    "Statewide"
+  ],
+  "scenario_years": [
+    2019,
+    2023,
+    2028
+  ],
+  "metrics": [
+    "Job_byAuto",
+    "Job_byTran",
+    "Job_byBike",
+    "Job_byWalk",
+    "HH_byAuto",
+    "HH_byTran",
+    "HH_byBike",
+    "HH_byWalk"
+  ],
+  "metric_ranges": {
+    "2019|Statewide": {
+      "Job_byAuto": {
+        "min": 0.0,
+        "max": 754257.0
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "Job_byBike": {
+        "min": 0.0,
+        "max": 272036.0
+      },
+      "Job_byWalk": {
+        "min": 0.0,
+        "max": 69792.0
+      },
+      "HH_byAuto": {
+        "min": 0.0,
+        "max": 326603.0
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "HH_byBike": {
+        "min": 0.0,
+        "max": 80712.0
+      },
+      "HH_byWalk": {
+        "min": 0.0,
+        "max": 8932.0
+      }
+    },
+    "2023|Statewide": {
+      "Job_byAuto": {
+        "min": 0.0,
+        "max": 816504.0
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "Job_byBike": {
+        "min": 0.0,
+        "max": 288188.0
+      },
+      "Job_byWalk": {
+        "min": 0.0,
+        "max": 73181.0
+      },
+      "HH_byAuto": {
+        "min": 0.0,
+        "max": 347974.0
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "HH_byBike": {
+        "min": 0.0,
+        "max": 85884.0
+      },
+      "HH_byWalk": {
+        "min": 0.0,
+        "max": 10638.0
+      }
+    },
+    "2028|Statewide": {
+      "Job_byAuto": {
+        "min": 0.0,
+        "max": 857322.0
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "Job_byBike": {
+        "min": 0.0,
+        "max": 304780.0
+      },
+      "Job_byWalk": {
+        "min": 0.0,
+        "max": 80538.0
+      },
+      "HH_byAuto": {
+        "min": 0.0,
+        "max": 373377.0
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "HH_byBike": {
+        "min": 0.0,
+        "max": 93634.0
+      },
+      "HH_byWalk": {
+        "min": 0.0,
+        "max": 12109.0
+      }
+    }
+  },
+  "record_counts": {
+    "2019|Statewide": 9815,
+    "2023|Statewide": 9815,
+    "2028|Statewide": 9815
+  },
+  "bounds": [
+    -114.05280297187916,
+    36.99765748027139,
+    -109.0417845699252,
+    42.001703500689224
+  ],
+  "files": {
+    "metrics": "ato/ustm_metrics.parquet",
+    "pmtiles": "ato/ustm_ato_taz.pmtiles",
+    "boundaries_pmtiles": "ato/ustm_taz_boundaries.pmtiles"
+  },
+  "pmtiles": {
+    "source_layer": "ato_taz",
+    "minzoom": 0,
+    "maxzoom": 11,
+    "feature_model": "wide_taz_by_year",
+    "feature_count": 9815,
+    "simplify_tolerance": 0.0005,
+    "property_template": "y{ScenarioYear}_{MetricColumn}"
+  },
+  "boundary_pmtiles": {
+    "source_layer": "ato_taz_boundary",
+    "minzoom": 0,
+    "maxzoom": 12,
+    "feature_count": 9815,
+    "simplify_tolerance": 0.00015,
+    "simplification_method": "per_taz_boundary"
+  }
+}

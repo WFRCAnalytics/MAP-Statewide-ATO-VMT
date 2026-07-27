@@ -3,14 +3,14 @@
     <div id="sidebar-top">
       <span class="step-header" style="margin-top:0">Step 1: Select Scenario</span>
       <select class="lu-select" :value="scenarioYear" @change="$emit('update:scenarioYear', Number($event.target.value))">
-        <option v-for="year in SCENARIO_YEARS" :key="year" :value="year">{{ year }}</option>
+        <option v-for="year in scenarioYears" :key="year" :value="year">{{ year }}</option>
       </select>
     </div>
 
     <div id="sidebar-body">
       <span class="step-header">Step 2: Select Model Area</span>
       <select class="lu-select" :value="modelArea" @change="$emit('update:modelArea', $event.target.value)">
-        <option v-for="area in MODEL_AREAS" :key="area" :value="area">{{ area }}</option>
+        <option v-for="area in modelAreas" :key="area" :value="area">{{ area }}</option>
       </select>
 
       <span class="step-header">Step 3: Choose Accessibility</span>
@@ -71,8 +71,8 @@
       <div class="data-status">
         <div class="data-status-icon"><i class="fa-solid fa-database"></i></div>
         <div>
-          <div class="data-status-title">Data placeholder</div>
-          <p>No ATO data has been loaded yet. The app is ready for CO_TAZID PMTiles or GeoJSON in the next phase.</p>
+          <div class="data-status-title">USTM ATO loaded</div>
+          <p>{{ recordCount.toLocaleString() }} TAZ records available for the current selection.</p>
         </div>
       </div>
     </div>
@@ -85,11 +85,14 @@ import { ACCESS_TARGETS, MODEL_AREAS, SCENARIO_YEARS, TRAVEL_MODES } from '../co
 import { MAP_LAYER_DEFS } from '../config/layers.js'
 
 defineProps({
+  scenarioYears: { type: Array, default: () => SCENARIO_YEARS },
+  modelAreas: { type: Array, default: () => MODEL_AREAS },
   scenarioYear: { type: Number, required: true },
   modelArea: { type: String, required: true },
   accessTarget: { type: String, required: true },
   travelMode: { type: String, required: true },
   layerVisible: { type: Object, required: true },
+  recordCount: { type: Number, default: 0 },
 })
 
 defineEmits([

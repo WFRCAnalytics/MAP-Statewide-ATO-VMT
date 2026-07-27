@@ -2,8 +2,14 @@
 
 Starter Vite/Vue app for the statewide Access to Opportunities viewer.
 
-This app intentionally ships with no ATO data yet. The map shell, sidebar controls,
-layer toggles, MapLibre setup, and PMTiles protocol are ready for the next phase.
+The map shell, sidebar controls, layer toggles, MapLibre setup, PMTiles source,
+and USTM ATO data loader are wired for the current prototype.
+
+The PMTiles layer uses simplified statewide TAZ polygons for speed. Each vector
+feature is one `CO_TAZID` with year-prefixed fields such as
+`y2023_Job_byAuto_norm`. TAZ outlines are served from a separate, lightly
+simplified boundary PMTiles file so they can remain readable without slowing
+the fill layer as much.
 
 ## Run locally
 
@@ -12,15 +18,19 @@ npm install
 npm run dev
 ```
 
-## Future PMTiles hook
+## Data
 
-When the ATO vector tiles are ready, set these environment variables before
-running or building:
+Canonical processed data is written to:
 
-```bash
-VITE_ATO_PMTILES_URL=/data/ato_taz.pmtiles
-VITE_ATO_PMTILES_LAYER=ato_taz
+```text
+../_data/processed/ato/
 ```
 
-The PMTiles source is registered in `src/composables/useMap.js` and wired in
-`src/App.vue`.
+The browser-serving copy lives in:
+
+```text
+public/data/ato/
+```
+
+Run `scripts/process_ustm_ato.py` from the repo root to rebuild the PMTiles,
+metrics Parquet, and manifest.

@@ -13,16 +13,18 @@
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
+import { getAtoMetricProperty } from '../composables/useAtoData.js'
 
 const props = defineProps({
   map: { type: Object, required: true },
   pinned: { type: Boolean, default: false },
+  scenarioYear: { type: Number, required: true },
   activeColumn: { type: String, required: true },
 })
 
 const pinnedContent = ref('')
 const placeholder = '<div class="tooltip-placeholder"><i class="fa-solid fa-hand-pointer"></i><br>Hover over a TAZ</div>'
-const hoverLayers = ['ato-taz-fill', 'ato-taz-extrusion', 'pmtiles-ato-fill']
+const hoverLayers = ['ato-taz-fill', 'ato-taz-extrusion']
 
 let popup = null
 let hoverHandler = null
@@ -36,12 +38,14 @@ function formatValue(value) {
 
 function buildHTML(properties) {
   const tazId = properties.CO_TAZID ?? properties.co_tazid ?? properties.tazid ?? 'Unknown'
-  const value = properties.access_value ?? properties[props.activeColumn]
+  const value = properties[getAtoMetricProperty(props.scenarioYear, props.activeColumn)]
+    ?? properties[props.activeColumn]
+    ?? properties.access_value
   return `
     <div class="tooltip-card">
       <div class="tooltip-card-header">CO_TAZID ${tazId}</div>
       <div class="tooltip-card-row">
-        <span>${props.activeColumn}</span>
+        <span>${props.scenarioYear} ${props.activeColumn}</span>
         <strong>${formatValue(value)}</strong>
       </div>
     </div>
