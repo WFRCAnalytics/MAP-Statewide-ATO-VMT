@@ -14,22 +14,25 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
 import {
-  getAtoMetricAvailabilityProperty,
-  getAtoMetricProperty,
+  getMetricAvailabilityProperty,
+  getMetricProperty,
 } from '../composables/useAtoData.js'
 
 const props = defineProps({
   map: { type: Object, required: true },
   pinned: { type: Boolean, default: false },
+  datasetMode: { type: String, default: 'ato' },
+  datasetLabel: { type: String, default: 'ATO' },
   modelArea: { type: String, required: true },
   scenarioYear: { type: Number, required: true },
   scenarioYears: { type: Array, default: () => [] },
   activeColumn: { type: String, required: true },
+  metricLabel: { type: String, required: true },
 })
 
 const pinnedContent = ref('')
 const placeholder = '<div class="tooltip-placeholder"><i class="fa-solid fa-hand-pointer"></i><br>Hover over a TAZ</div>'
-const hoverLayers = ['ato-taz-fill', 'ato-taz-extrusion']
+const hoverLayers = ['ato-taz-fill', 'ato-taz-extrusion', 'vmt-taz-fill', 'vmt-taz-extrusion']
 
 let popup = null
 let hoverHandler = null
@@ -71,8 +74,8 @@ function getChartYears() {
 }
 
 function getYearMetricValue(properties, year) {
-  const valueProperty = getAtoMetricProperty(year, props.activeColumn)
-  const availabilityProperty = getAtoMetricAvailabilityProperty(year, props.activeColumn)
+  const valueProperty = getMetricProperty(year, props.activeColumn)
+  const availabilityProperty = getMetricAvailabilityProperty(year, props.activeColumn)
   const availability = properties[availabilityProperty]
   const isAvailable = availability === undefined || availability === null || Number(availability) === 1
   const value = Number(properties[valueProperty])
@@ -96,7 +99,7 @@ function buildLineChart(properties) {
   if (!series.length) {
     return `
       <div class="tooltip-chart">
-        <div class="tooltip-chart-title">ATO trend</div>
+        <div class="tooltip-chart-title">${escapeHTML(props.datasetLabel)} trend</div>
         <div class="tooltip-chart-empty">No year values available</div>
       </div>
     `
@@ -161,10 +164,10 @@ function buildLineChart(properties) {
   return `
     <div class="tooltip-chart">
       <div class="tooltip-chart-title">
-        <span>ATO trend</span>
+        <span>${escapeHTML(props.datasetLabel)} trend</span>
         <strong>${minYear}${minYear === maxYear ? '' : `-${maxYear}`}</strong>
       </div>
-      <svg class="tooltip-year-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHTML(props.activeColumn)} by year">
+      <svg class="tooltip-year-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHTML(props.metricLabel)} by year">
         <line class="tooltip-chart-grid" x1="${left}" y1="${top}" x2="${width - right}" y2="${top}"></line>
         <line class="tooltip-chart-grid" x1="${left}" y1="${top + innerHeight}" x2="${width - right}" y2="${top + innerHeight}"></line>
         <text class="tooltip-chart-value-label" x="4" y="${top + 4}">${escapeHTML(formatCompactValue(maxValue))}</text>
@@ -179,7 +182,7 @@ function buildLineChart(properties) {
 
 function buildHTML(properties) {
   const tazId = properties.CO_TAZID ?? properties.co_tazid ?? properties.tazid ?? 'Unknown'
-  const value = properties[getAtoMetricProperty(props.scenarioYear, props.activeColumn)]
+  const value = properties[getMetricProperty(props.scenarioYear, props.activeColumn)]
     ?? properties[props.activeColumn]
     ?? properties.access_value
   const modelArea = properties.ModelArea ?? props.modelArea
@@ -190,7 +193,7 @@ function buildHTML(properties) {
         <small>${escapeHTML(modelArea)}</small>
       </div>
       <div class="tooltip-card-row">
-        <span>${props.scenarioYear} ${escapeHTML(props.activeColumn)}</span>
+        <span>${props.scenarioYear} ${escapeHTML(props.metricLabel)}</span>
         <strong>${escapeHTML(formatValue(value))}</strong>
       </div>
       ${buildLineChart(properties)}
@@ -257,11 +260,11 @@ watch(() => props.pinned, (pinned) => {
 })
 
 watch(
-  [() => props.scenarioYear, () => props.activeColumn, () => props.scenarioYears],
+  [() => props.scenarioYear, () => props.activeColumn, () => props.metricLabel, () => props.scenarioYears],
   refreshPinnedContent,
 )
 
-watch(() => props.modelArea, () => {
+watch([() => props.modelArea, () => props.datasetMode], () => {
   lastProperties = null
   pinnedContent.value = ''
   popup?.remove()

@@ -3,7 +3,8 @@ project:
   render:
     - "1-prepare-data-layers.qmd"
     - "2-process-ato-layers.qmd"
-    - "3-build-web-artifacts.qmd"
+    - "3-process-vmt-layers.qmd"
+    - "4-build-web-artifacts.qmd"
 
 execute:
   echo: true

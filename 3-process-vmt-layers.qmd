@@ -1,0 +1,34 @@
+---
+title: "3 - Process VMT Layers"
+format: html
+jupyter: python3
+---
+
+This step converts the model `assigned_net.dbf` files into canonical web-ready
+Vehicle Miles Traveled artifacts in `_data/processed/vmt/`.
+
+The processor:
+
+- reads each model area's `assigned_net.dbf` for each available scenario year
+- sums `AM_VMT`, `MD_VMT`, `PM_VMT`, `EV_VMT`, and `DY_VMT` to the `CO_TAZID`
+  level
+- normalizes each VMT period within `ScenarioYear` and `ModelArea`
+- builds simplified PMTiles polygons for the thematic fill layer
+- builds separate boundary PMTiles for readable TAZ outlines
+- writes a manifest with model-area bounds, record counts, metric ranges, and
+  file paths used by the web app
+
+```{python}
+from _src.process_vmt import build_processed_assets
+
+summary = build_processed_assets()
+{
+    "metric_rows": summary["metric_rows"],
+    "tile_features": summary["tile_features"],
+    "boundary_features": summary["boundary_features"],
+    "processed_dir": summary["processed_dir"],
+}
+```
+
+The output of this step is the source-of-truth processed VMT dataset. The Vite
+app still needs a browser-serving copy, which is created in the next step.

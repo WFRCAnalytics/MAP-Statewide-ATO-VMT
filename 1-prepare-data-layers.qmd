@@ -1,28 +1,40 @@
 ---
-title: "1 - Prepare Data Layers"
+title: "1 - Prepare ATO and VMT Data Layers"
 format: html
 jupyter: python3
 ---
 
 This first step documents the raw files needed to rebuild the Access to
-Opportunity web-map data. The web app does not run this work directly; these
-checks are part of the offline data pipeline.
+Opportunity and Vehicle Miles Traveled web-map data. The web app does not run
+this work directly; these checks are part of the offline data pipeline.
 
 The expected raw inputs live under `_data/raw/`:
 
 - Statewide TAZ polygons from `_data/raw/statewide TAZ/`
 - ATO CSVs from `_data/raw/0 - USTM/`, `_data/raw/1 - WF/`, `_data/raw/2 - CA/`,
   `_data/raw/3 - DX/`, `_data/raw/4 - WB/`, and `_data/raw/5 - IR/`
+- VMT `assigned_net.dbf` files from the same model-area folders and scenario
+  years
 
-Cache currently has 2023 and 2028 ATO files in the raw data folder. There is no
-2019 Cache ATO file in the current source data, so the pipeline does not expect
-one.
+Cache currently has 2023 and 2028 ATO/VMT files in the raw data folder. There
+is no 2019 Cache source file in the current data, so the pipeline does not
+expect one.
 
 ```{python}
-from _src.process_ato import RAW_ROOT, validate_raw_inputs
+import pandas as pd
+
+from _src.process_ato import RAW_ROOT, validate_raw_inputs as validate_ato_inputs
+from _src.process_vmt import validate_raw_inputs as validate_vmt_inputs
 
 print(f"Raw data root: {RAW_ROOT}")
-raw_inputs = validate_raw_inputs()
+
+raw_inputs = pd.concat(
+    [
+        validate_ato_inputs().assign(dataset="ATO"),
+        validate_vmt_inputs().assign(dataset="VMT"),
+    ],
+    ignore_index=True,
+)
 raw_inputs
 ```
 

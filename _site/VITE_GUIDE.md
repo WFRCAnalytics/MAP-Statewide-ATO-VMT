@@ -12,19 +12,19 @@ This is the short map of the new `_site` app. The main idea: Vite serves `index.
 
 - `src/main.js` -- JavaScript entry point. It creates the Vue app, imports the global CSS, registers the small tooltip helper, and mounts Vue into `#app`.
 
-- `src/App.vue` -- Main application component. This is the hub that holds app state, connects the sidebar/map controls, initializes MapLibre, and controls map layers.
+- `src/App.vue` -- Main application component. This is the hub that holds app state, connects the sidebar/map controls, initializes MapLibre, and controls ATO/VMT map layers.
 
 - `src/style.css` -- Global styling for the whole app. Most layout, sidebar, buttons, map controls, legend, modal, and MapLibre override styles live here.
 
 - `src/composables/useMap.js` -- Map setup helper. It creates the MapLibre map, registers PMTiles support, adds search/zoom/location controls, and exposes small map utility functions.
 
-- `src/composables/useAtoData.js` -- Browser data helper. It reads `manifest.json` for counts and legend ranges during normal map use. DuckDB-WASM is only started when exporting CSV data.
+- `src/composables/useAtoData.js` -- Browser data helper. It reads ATO/VMT `manifest.json` files for counts and legend ranges during normal map use. DuckDB-WASM is only started when exporting CSV data.
 
-- `src/config/constants.js` -- Shared settings and option lists. This has map center/zoom, colors, scenario years, model areas, Jobs/HH choices, and travel modes.
+- `src/config/constants.js` -- Shared settings and option lists. This has map center/zoom, colors, dataset choices, scenario years, model areas, Jobs/HH choices, travel modes, and VMT periods.
 
 - `src/config/layers.js` -- Layer toggle definitions. This is where the sidebar and floating layer panel get their labels/help text for map layers.
 
-- `src/components/Sidebar.vue` -- Left-side control panel. It owns the visible selectors for scenario year, model area, Jobs/HH, travel mode, and layer toggles.
+- `src/components/Sidebar.vue` -- Left-side control panel. It owns the visible selectors for ATO/VMT mode, scenario year, model area, Jobs/HH, travel mode, VMT period, and layer toggles.
 
 - `src/components/MapControls.vue` -- Top bar above the map. It contains download/map buttons, active column label, opacity slider, 3D toggle, and pinned-tooltip toggle.
 
@@ -34,7 +34,7 @@ This is the short map of the new `_site` app. The main idea: Vite serves `index.
 
 - `src/components/SplashModal.vue` -- Opening modal. It appears when the app first loads and gives a quick intro.
 
-- `src/components/Tooltip.vue` -- Map hover/pinned tooltip. It is ready to show `CO_TAZID` and the selected accessibility value once real data is wired in.
+- `src/components/Tooltip.vue` -- Map hover/pinned tooltip. It shows `CO_TAZID`, the selected metric value, and a small year trend chart.
 
 - `public/logo.png` -- Logo asset copied from the reference app. Files in `public` are served directly by Vite.
 
@@ -48,17 +48,27 @@ This is the short map of the new `_site` app. The main idea: Vite serves `index.
 
 - `public/data/ato/ato_taz_boundaries.pmtiles` -- Separate PMTiles line archive for cleaner TAZ boundaries. It keeps one lightly simplified boundary feature per model-area TAZ, which is much smaller and faster than the shared-linework experiment.
 
-- `../1-prepare-data-layers.qmd`, `../2-process-ato-layers.qmd`, and `../3-build-web-artifacts.qmd` -- Human-readable processing notebooks at the repo root. They check the raw inputs, build the canonical processed ATO files, then copy the deployable files into `_site/public/data/ato`.
+- `public/data/vmt/manifest.json` -- Small VMT data index used by the app. It lists available scenario years, model areas, VMT period names, and data file paths.
 
-- `../_src/process_ato.py` -- Reusable processing code called by the numbered Quarto pipeline.
+- `public/data/vmt/vmt_metrics.parquet` -- Processed VMT values by `ScenarioYear`, `ModelArea`, and `CO_TAZID`.
+
+- `public/data/vmt/vmt_taz.pmtiles` -- PMTiles vector tile archive used by MapLibre to draw simplified CO_TAZID polygons. Each tile feature is one model-area TAZ with year-prefixed VMT fields like `y2023_DY_VMT_norm`.
+
+- `public/data/vmt/vmt_taz_boundaries.pmtiles` -- Separate PMTiles line archive for VMT TAZ boundaries.
+
+- `../1-prepare-data-layers.qmd`, `../2-process-ato-layers.qmd`, `../3-process-vmt-layers.qmd`, and `../4-build-web-artifacts.qmd` -- Human-readable processing notebooks at the repo root. They check the raw inputs, build the canonical processed ATO/VMT files, then copy the deployable files into `_site/public/data/`.
+
+- `../_src/process_ato.py` and `../_src/process_vmt.py` -- Reusable processing code called by the numbered Quarto pipeline.
 
 ## Data Folder Roles
 
 - `_data/raw/` -- Source model exports and shapefiles. The processor reads from here.
 
-- `_data/processed/ato/` -- Canonical processed ATO outputs. This is the folder to trust for generated data artifacts: `manifest.json`, `ato_metrics.parquet`, the simplified polygon PMTiles file `ato_taz.pmtiles`, and the boundary line PMTiles file `ato_taz_boundaries.pmtiles`.
+- `_data/processed/ato/` -- Canonical processed ATO outputs. This is the folder to trust for generated ATO artifacts: `manifest.json`, `ato_metrics.parquet`, the simplified polygon PMTiles file `ato_taz.pmtiles`, and the boundary line PMTiles file `ato_taz_boundaries.pmtiles`.
 
-- `_site/public/data/ato/` -- Vite-serving copy. The browser fetches files from here while the app runs, but these files are copied from `_data/processed/ato`.
+- `_data/processed/vmt/` -- Canonical processed VMT outputs. This is the folder to trust for generated VMT artifacts: `manifest.json`, `vmt_metrics.parquet`, the simplified polygon PMTiles file `vmt_taz.pmtiles`, and the boundary line PMTiles file `vmt_taz_boundaries.pmtiles`.
+
+- `_site/public/data/ato/` and `_site/public/data/vmt/` -- Vite-serving copies. The browser fetches files from here while the app runs, but these files are copied from `_data/processed/`.
 
 ## How To Preview
 
@@ -76,7 +86,7 @@ http://127.0.0.1:5173/
 
 Do not open `index.html` with Live Server for this project. Live Server only serves static files; Vite is needed to compile Vue and bundle JavaScript dependencies.
 
-## How To Rebuild The ATO Data
+## How To Rebuild The ATO/VMT Data
 
 Run this from the repo root:
 

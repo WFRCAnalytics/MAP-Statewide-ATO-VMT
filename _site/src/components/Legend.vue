@@ -16,9 +16,10 @@ import { ACCESS_PALETTE } from '../config/constants.js'
 
 const props = defineProps({
   hasData: { type: Boolean, default: false },
-  metricLabel: { type: String, default: 'ATO Accessibility' },
+  metricLabel: { type: String, default: 'Selected Metric' },
   minValue: { type: Number, default: 0 },
   maxValue: { type: Number, default: 0 },
+  palette: { type: Array, default: () => ACCESS_PALETTE },
 })
 
 function formatNumber(value) {
@@ -44,10 +45,11 @@ function roundToStep(value, step) {
 const legendItems = computed(() => {
   const span = props.maxValue - props.minValue
   const step = getRoundingStep(span)
+  const palette = props.palette.length ? props.palette : ACCESS_PALETTE
 
-  return ACCESS_PALETTE.map((color, index) => {
+  return palette.map((color, index) => {
     const value = span > 0
-      ? props.minValue + (span * index) / (ACCESS_PALETTE.length - 1)
+      ? props.minValue + (span * index) / (palette.length - 1)
       : props.minValue
     return { color, label: formatNumber(roundToStep(value, step)) }
   })

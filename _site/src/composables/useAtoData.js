@@ -1,7 +1,7 @@
 import { DATA_BASE_URL } from '../config/constants.js'
 
 let connection = null
-let manifestCache = null
+const manifestCache = {}
 
 async function getConnection() {
   if (connection) return connection
@@ -69,15 +69,23 @@ function quoteString(value) {
   return String(value).replace(/'/g, "''")
 }
 
-export function getAtoMetricProperty(scenarioYear, metricColumn) {
+export function getMetricProperty(scenarioYear, metricColumn) {
   return `y${Number(scenarioYear)}_${metricColumn}`
 }
 
-export function getAtoMetricAvailabilityProperty(scenarioYear, metricColumn) {
-  return `${getAtoMetricProperty(scenarioYear, metricColumn)}_has`
+export function getMetricAvailabilityProperty(scenarioYear, metricColumn) {
+  return `${getMetricProperty(scenarioYear, metricColumn)}_has`
 }
 
-export function getAtoMetricRange(manifest, scenarioYear, modelArea, metricColumn) {
+export function getAtoMetricProperty(scenarioYear, metricColumn) {
+  return getMetricProperty(scenarioYear, metricColumn)
+}
+
+export function getAtoMetricAvailabilityProperty(scenarioYear, metricColumn) {
+  return getMetricAvailabilityProperty(scenarioYear, metricColumn)
+}
+
+export function getMetricRange(manifest, scenarioYear, modelArea, metricColumn) {
   const groupedRange = manifest.metric_ranges?.[`${Number(scenarioYear)}|${modelArea}`]?.[metricColumn]
   return {
     minValue: Number(groupedRange?.min ?? 0),
@@ -86,8 +94,12 @@ export function getAtoMetricRange(manifest, scenarioYear, modelArea, metricColum
   }
 }
 
-export function hasAtoMetricData(manifest, scenarioYear, modelArea, metricColumn) {
-  const { maxValue, hasRange } = getAtoMetricRange(
+export function getAtoMetricRange(manifest, scenarioYear, modelArea, metricColumn) {
+  return getMetricRange(manifest, scenarioYear, modelArea, metricColumn)
+}
+
+export function hasMetricData(manifest, scenarioYear, modelArea, metricColumn) {
+  const { maxValue, hasRange } = getMetricRange(
     manifest,
     scenarioYear,
     modelArea,
@@ -104,8 +116,12 @@ export function hasAtoMetricData(manifest, scenarioYear, modelArea, metricColumn
     && Boolean(manifest.files?.pmtiles)
 }
 
-export function getAtoSelectionSummary({ manifest, scenarioYear, modelArea, metricColumn }) {
-  const { minValue, maxValue, hasRange } = getAtoMetricRange(
+export function hasAtoMetricData(manifest, scenarioYear, modelArea, metricColumn) {
+  return hasMetricData(manifest, scenarioYear, modelArea, metricColumn)
+}
+
+export function getSelectionSummary({ manifest, scenarioYear, modelArea, metricColumn }) {
+  const { minValue, maxValue, hasRange } = getMetricRange(
     manifest,
     scenarioYear,
     modelArea,
@@ -129,32 +145,42 @@ export function getAtoSelectionSummary({ manifest, scenarioYear, modelArea, metr
   }
 }
 
-export async function loadAtoManifest() {
-  if (manifestCache) return manifestCache
-  const response = await fetch(`${DATA_BASE_URL}/ato/manifest.json`)
-  if (!response.ok) {
-    throw new Error(`Failed to load ATO manifest: ${response.status}`)
-  }
-  manifestCache = await response.json()
-  return manifestCache
+export function getAtoSelectionSummary(options) {
+  return getSelectionSummary(options)
 }
 
-export async function loadAtoRows({ scenarioYear, modelArea, metricColumn }) {
-  const manifest = await loadAtoManifest()
+export async function loadDataManifest(datasetId = 'ato') {
+  if (manifestCache[datasetId]) return manifestCache[datasetId]
+
+  const response = await fetch(`${DATA_BASE_URL}/${datasetId}/manifest.json`)
+  if (!response.ok) {
+    throw new Error(`Failed to load ${datasetId.toUpperCase()} manifest: ${response.status}`)
+  }
+  manifestCache[datasetId] = await response.json()
+  return manifestCache[datasetId]
+}
+
+export async function loadAtoManifest() {
+  return loadDataManifest('ato')
+}
+
+export async function loadDataRows({ datasetId = 'ato', scenarioYear, modelArea, metricColumn }) {
+  const manifest = await loadDataManifest(datasetId)
   if (!manifest.metrics.includes(metricColumn)) {
-    throw new Error(`Metric ${metricColumn} is not listed in the ATO manifest`)
+    throw new Error(`Metric ${metricColumn} is not listed in the ${datasetId.toUpperCase()} manifest`)
   }
 
   const conn = await getConnection()
   const metricsUrl = `${DATA_BASE_URL}/${manifest.files.metrics}`
   const metricIdentifier = quoteIdentifier(metricColumn)
   const modelAreaSql = quoteString(modelArea)
+  const idColumns = datasetId === 'ato' ? '"SA_TAZID",' : ''
 
   const table = await conn.query(`
     SELECT
       "ScenarioYear",
       "ModelArea",
-      "SA_TAZID",
+      ${idColumns}
       "CO_TAZID",
       CAST(${metricIdentifier} AS DOUBLE) AS metric_value
     FROM read_parquet('${metricsUrl}')
@@ -164,7 +190,7 @@ export async function loadAtoRows({ scenarioYear, modelArea, metricColumn }) {
   `)
 
   const rows = tableToRows(table)
-  const { minValue, maxValue } = getAtoMetricRange(manifest, scenarioYear, modelArea, metricColumn)
+  const { minValue, maxValue } = getMetricRange(manifest, scenarioYear, modelArea, metricColumn)
   const spread = maxValue - minValue
 
   for (const row of rows) {
@@ -177,4 +203,8 @@ export async function loadAtoRows({ scenarioYear, modelArea, metricColumn }) {
     minValue,
     maxValue,
   }
+}
+
+export async function loadAtoRows(options) {
+  return loadDataRows({ ...options, datasetId: 'ato' })
 }

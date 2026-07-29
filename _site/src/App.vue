@@ -1,31 +1,36 @@
 <template>
   <nav id="navbar">
     <img :src="logoUrl" alt="WFRC" />
-    <span>Statewide ATO Explorer</span>
+    <span>Statewide ATO and VMT Explorer</span>
   </nav>
 
   <div id="app-layout">
-    <Sidebar
+      <Sidebar
+      :dataset-mode="datasetMode"
       :scenario-years="scenarioYears"
       :model-areas="modelAreas"
       :scenario-year="scenarioYear"
       :model-area="modelArea"
       :access-target="accessTarget"
       :travel-mode="travelMode"
+      :vmt-period="vmtPeriod"
       :disabled-access-targets="disabledAccessTargets"
       :disabled-travel-modes="disabledTravelModes"
+      :disabled-vmt-periods="disabledVmtPeriods"
       :layer-visible="layerVisible"
       :record-count="recordCount"
+      @update:datasetMode="onDatasetModeChange"
       @update:scenarioYear="scenarioYear = $event"
       @update:modelArea="modelArea = $event"
       @update:accessTarget="onAccessTargetChange"
       @update:travelMode="onTravelModeChange"
+      @update:vmtPeriod="onVmtPeriodChange"
       @toggle-layer="onToggleLayer"
     />
 
     <main id="map-area" :class="{ 'overview-visible': layerVisible['overview-map'] }">
       <MapControls
-        :active-column="activeColumn"
+        :active-column="activeMetricLabel"
         :has-data="hasData"
         :is3-d="is3D"
         :opacity="fillOpacity"
@@ -41,16 +46,20 @@
         v-if="mapReady"
         :map="mapInstance"
         :pinned="pinnedTooltip"
+        :dataset-mode="datasetMode"
+        :dataset-label="activeDatasetLabel"
         :model-area="modelArea"
         :scenario-year="scenarioYear"
         :scenario-years="activeModelScenarioYears"
         :active-column="activeColumn"
+        :metric-label="activeMetricLabel"
       />
       <Legend
         :has-data="hasData"
-        :metric-label="activeColumn"
+        :metric-label="activeMetricLabel"
         :min-value="minValue"
         :max-value="maxValue"
+        :palette="activePalette"
       />
       <LayerControl :layer-visible="layerVisible" @toggle-layer="onToggleLayer" />
       <OverviewMap
@@ -62,7 +71,7 @@
       />
       <div class="empty-state" v-if="!hasData && !isLoading">
         <i class="fa-solid fa-circle-info"></i>
-        <span>No ATO data for current selection</span>
+        <span>No {{ activeDatasetLabel }} data for current selection</span>
       </div>
       <div id="loading-overlay" v-if="isLoading">
         <div class="loading-spinner"></div>
@@ -87,29 +96,33 @@ import Tooltip from './components/Tooltip.vue'
 import {
   ACCESS_PALETTE,
   ACCESS_TARGETS,
+  DATASETS,
   DATA_BASE_URL,
   MODEL_AREAS,
   SCENARIO_YEARS,
   TRAVEL_MODES,
+  VMT_PALETTE,
+  VMT_PERIODS,
 } from './config/constants.js'
 import {
-  getAtoMetricAvailabilityProperty,
-  getAtoMetricProperty,
-  getAtoSelectionSummary,
-  hasAtoMetricData,
-  loadAtoManifest,
-  loadAtoRows,
+  getMetricAvailabilityProperty,
+  getMetricProperty,
+  getSelectionSummary,
+  hasMetricData,
+  loadDataManifest,
+  loadDataRows,
 } from './composables/useAtoData.js'
 import { findCartoVectorSource, getFirstLabelLayerId, initMap, setExtentBounds } from './composables/useMap.js'
 
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`
+const DATASET_IDS = DATASETS.map((dataset) => dataset.value)
 
+const datasetMode = ref('ato')
 const scenarioYear = ref(SCENARIO_YEARS[1])
 const modelArea = ref(MODEL_AREAS[0])
-const scenarioYears = ref(SCENARIO_YEARS)
-const modelAreas = ref(MODEL_AREAS)
 const accessTarget = ref('Job')
 const travelMode = ref('Auto')
+const vmtPeriod = ref('DY_VMT')
 const fillOpacity = ref(0.78)
 const is3D = ref(false)
 const pinnedTooltip = ref(true)
@@ -123,31 +136,58 @@ const recordCount = ref(0)
 const minValue = ref(0)
 const maxValue = ref(0)
 const selectedRows = ref([])
-const atoManifest = ref(null)
+const manifests = reactive({
+  ato: null,
+  vmt: null,
+})
 
 const layerVisible = reactive({
-  'ato-fill': true,
+  'metric-fill': true,
   'taz-outline': true,
   'major-roads': false,
   'overview-map': true,
 })
 
-const activeColumn = computed(() => `${accessTarget.value}_by${travelMode.value}`)
-const activeMetricProperty = computed(() => getAtoMetricProperty(scenarioYear.value, activeColumn.value))
+const activeManifest = computed(() => manifests[datasetMode.value])
+const activeDataset = computed(() => (
+  DATASETS.find((dataset) => dataset.value === datasetMode.value) ?? DATASETS[0]
+))
+const activeDatasetLabel = computed(() => activeDataset.value.label)
+const scenarioYears = computed(() => activeManifest.value?.scenario_years ?? SCENARIO_YEARS)
+const modelAreas = computed(() => activeManifest.value?.model_areas ?? MODEL_AREAS)
+const activeColumn = computed(() => (
+  datasetMode.value === 'ato'
+    ? `${accessTarget.value}_by${travelMode.value}`
+    : vmtPeriod.value
+))
+const activeMetricLabel = computed(() => {
+  if (datasetMode.value === 'vmt') {
+    const period = VMT_PERIODS.find((item) => item.value === vmtPeriod.value)
+    return period ? `${period.label} VMT` : vmtPeriod.value
+  }
+
+  const target = ACCESS_TARGETS.find((item) => item.value === accessTarget.value)
+  const mode = TRAVEL_MODES.find((item) => item.value === travelMode.value)
+  return `${target?.label ?? accessTarget.value} by ${mode?.label ?? travelMode.value}`
+})
+const activePalette = computed(() => (
+  datasetMode.value === 'vmt' ? VMT_PALETTE : ACCESS_PALETTE
+))
+const activeMetricProperty = computed(() => getMetricProperty(scenarioYear.value, activeColumn.value))
 const activeMetricAvailabilityProperty = computed(() => (
-  getAtoMetricAvailabilityProperty(scenarioYear.value, activeColumn.value)
+  getMetricAvailabilityProperty(scenarioYear.value, activeColumn.value)
 ))
 const overviewModelBounds = computed(() => getSelectionBounds())
 const overviewStateBounds = computed(() => getManifestBounds())
 const activeModelScenarioYears = computed(() => {
-  const years = atoManifest.value?.scenario_years_by_model_area?.[modelArea.value] ?? scenarioYears.value
+  const years = activeManifest.value?.scenario_years_by_model_area?.[modelArea.value] ?? scenarioYears.value
   return [...new Set((years ?? []).map(Number).filter(Number.isFinite))].sort((a, b) => a - b)
 })
 const disabledAccessTargets = computed(() => (
   Object.fromEntries(
     ACCESS_TARGETS.map((target) => [
       target.value,
-      !TRAVEL_MODES.some((mode) => metricHasData(metricColumnFor(target.value, mode.value))),
+      !TRAVEL_MODES.some((mode) => metricHasData(metricColumnFor(target.value, mode.value), 'ato')),
     ]),
   )
 ))
@@ -155,7 +195,15 @@ const disabledTravelModes = computed(() => (
   Object.fromEntries(
     TRAVEL_MODES.map((mode) => [
       mode.value,
-      !metricHasData(metricColumnFor(accessTarget.value, mode.value)),
+      !metricHasData(metricColumnFor(accessTarget.value, mode.value), 'ato'),
+    ]),
+  )
+))
+const disabledVmtPeriods = computed(() => (
+  Object.fromEntries(
+    VMT_PERIODS.map((period) => [
+      period.value,
+      !metricHasData(period.value, 'vmt'),
     ]),
   )
 ))
@@ -165,7 +213,7 @@ onMounted(() => {
   mapInstance.value.on('style.load', async () => {
     await loadManifestOptions()
     setupMapLayers()
-    refreshAtoLayer({ fit: true })
+    refreshDataLayer({ fit: true })
   })
 })
 
@@ -177,64 +225,77 @@ function setupMapLayers() {
 
   const firstLabelId = getFirstLabelLayerId(map)
   const cartoSource = findCartoVectorSource(map)
-  const pmtilesFile = atoManifest.value?.files?.pmtiles
-  const boundaryPmtilesFile = atoManifest.value?.files?.boundaries_pmtiles
-  const sourceLayer = atoManifest.value?.pmtiles?.source_layer ?? 'ato_taz'
-  const boundarySourceLayer = atoManifest.value?.boundary_pmtiles?.source_layer ?? 'ato_taz_boundary'
-
-  if (pmtilesFile) {
-    map.addSource('ato-taz-source', {
-      type: 'vector',
-      url: `pmtiles://${DATA_BASE_URL}/${pmtilesFile}`,
-    })
-
-    map.addLayer({
-      id: 'ato-taz-fill',
-      type: 'fill',
-      source: 'ato-taz-source',
-      'source-layer': sourceLayer,
-      filter: buildAtoFilter(),
-      layout: { visibility: layerVisible['ato-fill'] && !is3D.value ? 'visible' : 'none' },
-      paint: {
-        'fill-color': buildAccessColorExpression(),
-        'fill-antialias': false,
-        'fill-opacity': fillOpacity.value,
-      },
-    }, firstLabelId)
-
-    map.addLayer({
-      id: 'ato-taz-extrusion',
-      type: 'fill-extrusion',
-      source: 'ato-taz-source',
-      'source-layer': sourceLayer,
-      filter: buildAtoFilter(),
-      layout: { visibility: layerVisible['ato-fill'] && is3D.value ? 'visible' : 'none' },
-      paint: {
-        'fill-extrusion-color': buildAccessColorExpression(),
-        'fill-extrusion-height': buildExtrusionExpression(),
-        'fill-extrusion-opacity': fillOpacity.value,
-      },
-    }, firstLabelId)
-
+  for (const datasetId of DATASET_IDS) {
+    addDatasetLayers(map, datasetId, manifests[datasetId], firstLabelId)
   }
+
   if (cartoSource) {
     addRoadLayers(map, cartoSource, firstLabelId)
   }
 
-  if (boundaryPmtilesFile) {
-    map.addSource('ato-boundary-source', {
+  setExtentBounds(getSelectionBounds() ?? [[-114.1, 36.9], [-109.0, 42.1]])
+  mapReady.value = true
+}
+
+function addDatasetLayers(map, datasetId, manifest, firstLabelId) {
+  if (!manifest?.files?.pmtiles) return
+
+  const sourceLayer = manifest.pmtiles?.source_layer ?? `${datasetId}_taz`
+  const boundarySourceLayer = manifest.boundary_pmtiles?.source_layer ?? `${datasetId}_taz_boundary`
+  const sourceId = `${datasetId}-taz-source`
+  const boundarySourceId = `${datasetId}-boundary-source`
+  const fillLayerId = `${datasetId}-taz-fill`
+  const extrusionLayerId = `${datasetId}-taz-extrusion`
+  const lineLayerId = `${datasetId}-taz-line`
+  const isActive = datasetId === datasetMode.value
+
+  map.addSource(sourceId, {
+    type: 'vector',
+    url: `pmtiles://${DATA_BASE_URL}/${manifest.files.pmtiles}`,
+  })
+
+  map.addLayer({
+    id: fillLayerId,
+    type: 'fill',
+    source: sourceId,
+    'source-layer': sourceLayer,
+    filter: isActive ? buildMetricFilter() : buildModelAreaFilter(),
+    layout: { visibility: getFillVisibility(datasetId, false) },
+    paint: {
+      'fill-color': buildMetricColorExpression(),
+      'fill-antialias': false,
+      'fill-opacity': fillOpacity.value,
+    },
+  }, firstLabelId)
+
+  map.addLayer({
+    id: extrusionLayerId,
+    type: 'fill-extrusion',
+    source: sourceId,
+    'source-layer': sourceLayer,
+    filter: isActive ? buildMetricFilter() : buildModelAreaFilter(),
+    layout: { visibility: getFillVisibility(datasetId, true) },
+    paint: {
+      'fill-extrusion-color': buildMetricColorExpression(),
+      'fill-extrusion-height': buildExtrusionExpression(),
+      'fill-extrusion-opacity': fillOpacity.value,
+    },
+  }, firstLabelId)
+
+  if (manifest.files.boundaries_pmtiles) {
+    map.addSource(boundarySourceId, {
       type: 'vector',
-      url: `pmtiles://${DATA_BASE_URL}/${boundaryPmtilesFile}`,
+      url: `pmtiles://${DATA_BASE_URL}/${manifest.files.boundaries_pmtiles}`,
     })
 
     map.addLayer({
-      id: 'ato-taz-line',
+      id: lineLayerId,
       type: 'line',
-      source: 'ato-boundary-source',
+      source: boundarySourceId,
       'source-layer': boundarySourceLayer,
-      filter: buildAtoFilter(),
+      filter: isActive ? buildMetricFilter() : buildModelAreaFilter(),
       minzoom: 6,
-      layout: { visibility: layerVisible['taz-outline'] ? 'visible' : 'none' },
+      layout: { visibility: getLineVisibility(datasetId) },
       paint: {
         'line-color': '#557799',
         'line-width': 0.8,
@@ -242,30 +303,26 @@ function setupMapLayers() {
       },
     }, firstLabelId)
   }
-
-  setExtentBounds(getSelectionBounds() ?? [[-114.1, 36.9], [-109.0, 42.1]])
-  mapReady.value = true
 }
 
 async function loadManifestOptions() {
   try {
-    const manifest = await loadAtoManifest()
-    atoManifest.value = manifest
-    if (manifest.scenario_years?.length) {
-      scenarioYears.value = manifest.scenario_years
-      if (!scenarioYears.value.includes(scenarioYear.value)) {
-        scenarioYear.value = scenarioYears.value[0]
-      }
+    const [atoManifest, vmtManifest] = await Promise.all([
+      loadDataManifest('ato'),
+      loadDataManifest('vmt'),
+    ])
+    manifests.ato = atoManifest
+    manifests.vmt = vmtManifest
+
+    if (!scenarioYears.value.includes(scenarioYear.value)) {
+      scenarioYear.value = scenarioYears.value[0]
     }
-    if (manifest.model_areas?.length) {
-      modelAreas.value = manifest.model_areas
-      if (!modelAreas.value.includes(modelArea.value)) {
-        modelArea.value = modelAreas.value[0]
-      }
+    if (!modelAreas.value.includes(modelArea.value)) {
+      modelArea.value = modelAreas.value[0]
     }
     ensureAvailableMetricSelection()
   } catch (error) {
-    console.error('Failed to load ATO manifest:', error)
+    console.error('Failed to load data manifests:', error)
   }
 }
 
@@ -273,11 +330,11 @@ function metricColumnFor(target, mode) {
   return `${target}_by${mode}`
 }
 
-function metricHasData(metricColumn) {
-  const manifest = atoManifest.value
+function metricHasData(metricColumn, datasetId = datasetMode.value) {
+  const manifest = manifests[datasetId]
   if (!manifest) return true
 
-  return hasAtoMetricData(
+  return hasMetricData(
     manifest,
     scenarioYear.value,
     modelArea.value,
@@ -298,7 +355,17 @@ function getFirstAvailableMode(target) {
 }
 
 function ensureAvailableMetricSelection() {
-  if (!atoManifest.value) return
+  if (!activeManifest.value) return
+
+  if (datasetMode.value === 'vmt') {
+    if (disabledVmtPeriods.value[vmtPeriod.value]) {
+      const nextPeriod = VMT_PERIODS.find((period) => metricHasData(period.value, 'vmt'))?.value
+      if (nextPeriod) {
+        vmtPeriod.value = nextPeriod
+      }
+    }
+    return
+  }
 
   let nextTarget = accessTarget.value
   if (disabledAccessTargets.value[nextTarget]) {
@@ -352,7 +419,7 @@ function addRoadLayers(map, cartoSource, firstLabelId) {
   }
 }
 
-function buildAccessColorExpression() {
+function buildMetricColorExpression() {
   const normalizedColumn = `${activeMetricProperty.value}_norm`
   return [
     'case',
@@ -361,12 +428,12 @@ function buildAccessColorExpression() {
       'interpolate',
       ['linear'],
       ['to-number', ['get', normalizedColumn]],
-      0, ACCESS_PALETTE[0],
-      0.2, ACCESS_PALETTE[1],
-      0.4, ACCESS_PALETTE[2],
-      0.6, ACCESS_PALETTE[3],
-      0.8, ACCESS_PALETTE[4],
-      1, ACCESS_PALETTE[5],
+      0, activePalette.value[0],
+      0.2, activePalette.value[1],
+      0.4, activePalette.value[2],
+      0.6, activePalette.value[3],
+      0.8, activePalette.value[4],
+      1, activePalette.value[5],
     ],
     '#d9d9d9',
   ]
@@ -383,7 +450,11 @@ function buildExtrusionExpression() {
   ]
 }
 
-function buildAtoFilter() {
+function buildModelAreaFilter() {
+  return ['==', ['get', 'ModelArea'], modelArea.value]
+}
+
+function buildMetricFilter() {
   return [
     'all',
     ['==', ['get', 'ModelArea'], modelArea.value],
@@ -391,13 +462,25 @@ function buildAtoFilter() {
   ]
 }
 
-function refreshAtoLayer({ fit = false } = {}) {
+function getFillVisibility(datasetId, extrusion) {
+  const visible = datasetId === datasetMode.value
+    && layerVisible['metric-fill']
+    && (extrusion ? is3D.value : !is3D.value)
+  return visible ? 'visible' : 'none'
+}
+
+function getLineVisibility(datasetId) {
+  const visible = datasetId === datasetMode.value && layerVisible['taz-outline']
+  return visible ? 'visible' : 'none'
+}
+
+function refreshDataLayer({ fit = false } = {}) {
   const map = mapInstance.value
-  const manifest = atoManifest.value
+  const manifest = activeManifest.value
   if (!mapReady.value || !map || !manifest) return
 
   try {
-    const result = getAtoSelectionSummary({
+    const result = getSelectionSummary({
       manifest,
       scenarioYear: scenarioYear.value,
       modelArea: modelArea.value,
@@ -416,7 +499,7 @@ function refreshAtoLayer({ fit = false } = {}) {
       fitToSelectionBounds()
     }
   } catch (error) {
-    console.error('Failed to refresh ATO layer:', error)
+    console.error('Failed to refresh data layer:', error)
     selectedRows.value = []
     recordCount.value = 0
     minValue.value = 0
@@ -426,7 +509,7 @@ function refreshAtoLayer({ fit = false } = {}) {
 }
 
 function getManifestBounds() {
-  const bounds = atoManifest.value?.bounds
+  const bounds = activeManifest.value?.bounds
   if (!Array.isArray(bounds) || bounds.length !== 4) return null
   const [minLng, minLat, maxLng, maxLat] = bounds.map(Number)
   if (![minLng, minLat, maxLng, maxLat].every(Number.isFinite)) return null
@@ -434,7 +517,7 @@ function getManifestBounds() {
 }
 
 function getSelectionBounds() {
-  const bounds = atoManifest.value?.model_area_bounds?.[modelArea.value]
+  const bounds = activeManifest.value?.model_area_bounds?.[modelArea.value]
   if (!Array.isArray(bounds) || bounds.length !== 4) return getManifestBounds()
   const [minLng, minLat, maxLng, maxLat] = bounds.map(Number)
   if (![minLng, minLat, maxLng, maxLat].every(Number.isFinite)) return getManifestBounds()
@@ -456,20 +539,35 @@ function fitToSelectionBounds() {
 function refreshStyleExpressions() {
   const map = mapInstance.value
   if (!map) return
-  const filter = buildAtoFilter()
-  if (map.getLayer('ato-taz-fill')) {
-    map.setFilter('ato-taz-fill', filter)
-    map.setPaintProperty('ato-taz-fill', 'fill-color', buildAccessColorExpression())
-    map.setPaintProperty('ato-taz-fill', 'fill-opacity', fillOpacity.value)
-  }
-  if (map.getLayer('ato-taz-extrusion')) {
-    map.setFilter('ato-taz-extrusion', filter)
-    map.setPaintProperty('ato-taz-extrusion', 'fill-extrusion-color', buildAccessColorExpression())
-    map.setPaintProperty('ato-taz-extrusion', 'fill-extrusion-height', buildExtrusionExpression())
-    map.setPaintProperty('ato-taz-extrusion', 'fill-extrusion-opacity', fillOpacity.value)
-  }
-  if (map.getLayer('ato-taz-line')) {
-    map.setFilter('ato-taz-line', filter)
+
+  for (const datasetId of DATASET_IDS) {
+    const isActive = datasetId === datasetMode.value
+    const filter = isActive ? buildMetricFilter() : buildModelAreaFilter()
+    const fillLayerId = `${datasetId}-taz-fill`
+    const extrusionLayerId = `${datasetId}-taz-extrusion`
+    const lineLayerId = `${datasetId}-taz-line`
+
+    if (map.getLayer(fillLayerId)) {
+      map.setFilter(fillLayerId, filter)
+      map.setLayoutProperty(fillLayerId, 'visibility', getFillVisibility(datasetId, false))
+      if (isActive) {
+        map.setPaintProperty(fillLayerId, 'fill-color', buildMetricColorExpression())
+        map.setPaintProperty(fillLayerId, 'fill-opacity', fillOpacity.value)
+      }
+    }
+    if (map.getLayer(extrusionLayerId)) {
+      map.setFilter(extrusionLayerId, filter)
+      map.setLayoutProperty(extrusionLayerId, 'visibility', getFillVisibility(datasetId, true))
+      if (isActive) {
+        map.setPaintProperty(extrusionLayerId, 'fill-extrusion-color', buildMetricColorExpression())
+        map.setPaintProperty(extrusionLayerId, 'fill-extrusion-height', buildExtrusionExpression())
+        map.setPaintProperty(extrusionLayerId, 'fill-extrusion-opacity', fillOpacity.value)
+      }
+    }
+    if (map.getLayer(lineLayerId)) {
+      map.setFilter(lineLayerId, filter)
+      map.setLayoutProperty(lineLayerId, 'visibility', getLineVisibility(datasetId))
+    }
   }
 }
 
@@ -478,15 +576,12 @@ function onToggleLayer(id) {
   const map = mapInstance.value
   if (!map) return
 
-  if (id === 'ato-fill') {
-    const visible2d = layerVisible[id] && !is3D.value ? 'visible' : 'none'
-    const visible3d = layerVisible[id] && is3D.value ? 'visible' : 'none'
-    if (map.getLayer('ato-taz-fill')) map.setLayoutProperty('ato-taz-fill', 'visibility', visible2d)
-    if (map.getLayer('ato-taz-extrusion')) map.setLayoutProperty('ato-taz-extrusion', 'visibility', visible3d)
+  if (id === 'metric-fill') {
+    refreshStyleExpressions()
   }
 
-  if (id === 'taz-outline' && map.getLayer('ato-taz-line')) {
-    map.setLayoutProperty('ato-taz-line', 'visibility', layerVisible[id] ? 'visible' : 'none')
+  if (id === 'taz-outline') {
+    refreshStyleExpressions()
   }
 
   if (id === 'major-roads' && map.getLayer('roads-major')) {
@@ -499,18 +594,19 @@ function on3DChange(value) {
   is3D.value = value
   const map = mapInstance.value
   if (!map) return
-  if (map.getLayer('ato-taz-fill')) {
-    map.setLayoutProperty('ato-taz-fill', 'visibility', layerVisible['ato-fill'] && !value ? 'visible' : 'none')
-  }
-  if (map.getLayer('ato-taz-extrusion')) {
-    map.setLayoutProperty('ato-taz-extrusion', 'visibility', layerVisible['ato-fill'] && value ? 'visible' : 'none')
-  }
+  refreshStyleExpressions()
   map.easeTo({ pitch: value ? 45 : 0, duration: 500 })
 }
 
 function onOpacityChange(value) {
   fillOpacity.value = value
   refreshStyleExpressions()
+}
+
+function onDatasetModeChange(value) {
+  if (!DATASET_IDS.includes(value)) return
+  datasetMode.value = value
+  ensureAvailableMetricSelection()
 }
 
 function onAccessTargetChange(value) {
@@ -524,13 +620,19 @@ function onTravelModeChange(value) {
   travelMode.value = value
 }
 
+function onVmtPeriodChange(value) {
+  if (disabledVmtPeriods.value[value]) return
+  vmtPeriod.value = value
+}
+
 async function onDownload() {
   if (!hasData.value) return
   isLoading.value = true
-  loadingText.value = `Preparing ${activeColumn.value} download...`
+  loadingText.value = `Preparing ${activeMetricLabel.value} download...`
 
   try {
-    const result = await loadAtoRows({
+    const result = await loadDataRows({
+      datasetId: datasetMode.value,
       scenarioYear: scenarioYear.value,
       modelArea: modelArea.value,
       metricColumn: activeColumn.value,
@@ -538,27 +640,24 @@ async function onDownload() {
     const rows = result.rows
     selectedRows.value = rows
 
-    const columns = ['ScenarioYear', 'ModelArea', 'SA_TAZID', 'CO_TAZID', activeColumn.value, 'access_value']
+    const columns = datasetMode.value === 'ato'
+      ? ['ScenarioYear', 'ModelArea', 'SA_TAZID', 'CO_TAZID', activeColumn.value, 'access_value']
+      : ['ScenarioYear', 'ModelArea', 'CO_TAZID', activeColumn.value, 'access_value']
     const header = columns.join(',')
     const body = rows
-      .map((row) => [
-        row.ScenarioYear,
-        row.ModelArea,
-        row.SA_TAZID,
-        row.CO_TAZID,
-        row.metric_value,
-        row.access_value,
-      ].join(','))
+      .map((row) => columns.map((column) => (
+        column === activeColumn.value ? row.metric_value : row[column]
+      )).join(','))
       .join('\n')
     const blob = new Blob([`${header}\n${body}`], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `ATO_${modelArea.value.replace(/[^A-Za-z0-9]+/g, '_')}_${scenarioYear.value}_${activeColumn.value}.csv`
+    link.download = `${datasetMode.value.toUpperCase()}_${modelArea.value.replace(/[^A-Za-z0-9]+/g, '_')}_${scenarioYear.value}_${activeColumn.value}.csv`
     link.click()
     URL.revokeObjectURL(url)
   } catch (error) {
-    console.error('Failed to prepare ATO download:', error)
+    console.error('Failed to prepare data download:', error)
   } finally {
     isLoading.value = false
   }
@@ -570,19 +669,23 @@ function onScreenshot() {
   map.once('render', () => {
     const link = document.createElement('a')
     link.href = map.getCanvas().toDataURL('image/png')
-    link.download = 'StatewideATOExplorer_Map.png'
+    link.download = 'Statewide_ATO_VMT_Explorer_Map.png'
     link.click()
   })
   map.triggerRepaint()
 }
 
+watch(datasetMode, () => {
+  ensureAvailableMetricSelection()
+  refreshDataLayer({ fit: false })
+})
 watch(scenarioYear, () => {
   ensureAvailableMetricSelection()
-  refreshAtoLayer({ fit: false })
+  refreshDataLayer({ fit: false })
 })
-watch(activeColumn, () => refreshAtoLayer({ fit: false }))
+watch(activeColumn, () => refreshDataLayer({ fit: false }))
 watch(modelArea, () => {
   ensureAvailableMetricSelection()
-  refreshAtoLayer({ fit: true })
+  refreshDataLayer({ fit: true })
 })
 </script>

@@ -7,6 +7,7 @@ _data/processed/**/tmp_*
 _site/public/data/**/.tmp_*
 _site/public/data/**/tmp_*
 _site/public/data/ato/ustm_taz_geometries.parquet
+*.dbf
 
 /.quarto/
 **/*.quarto_ipynb

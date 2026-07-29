@@ -1,8 +1,8 @@
 export const MAP_LAYER_DEFS = [
   {
-    id: 'ato-fill',
-    label: 'ATO Accessibility',
-    help: 'CO_TAZID accessibility surface from the processed PMTiles archive.',
+    id: 'metric-fill',
+    label: 'Metric Surface',
+    help: 'CO_TAZID thematic surface from the active ATO or VMT PMTiles archive.',
   },
   {
     id: 'taz-outline',

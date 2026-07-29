@@ -1,0 +1,44 @@
+---
+title: "4 - Build Web Artifacts"
+format: html
+jupyter: python3
+---
+
+This step publishes the canonical processed ATO and VMT artifacts into the Vite
+app's static data folder. Files in `_site/public/data/` are served directly by
+the browser at runtime.
+
+This step does not recompute metrics or PMTiles. Run `2-process-ato-layers.qmd`
+and `3-process-vmt-layers.qmd` first when raw data has changed.
+
+```{python}
+from _src import process_ato, process_vmt
+
+expected_files = [
+    process_ato.PROCESSED_DIR / "manifest.json",
+    process_ato.PROCESSED_DIR / process_ato.METRICS_FILENAME,
+    process_ato.PROCESSED_DIR / process_ato.FILL_PMTILES_FILENAME,
+    process_ato.PROCESSED_DIR / process_ato.BOUNDARY_PMTILES_FILENAME,
+    process_vmt.PROCESSED_DIR / "manifest.json",
+    process_vmt.PROCESSED_DIR / process_vmt.METRICS_FILENAME,
+    process_vmt.PROCESSED_DIR / process_vmt.FILL_PMTILES_FILENAME,
+    process_vmt.PROCESSED_DIR / process_vmt.BOUNDARY_PMTILES_FILENAME,
+]
+
+missing = [path for path in expected_files if not path.exists()]
+if missing:
+    missing_text = "\n".join(f"  - {path}" for path in missing)
+    raise FileNotFoundError(
+        "Missing processed artifacts. Run steps 2 and 3 first.\n"
+        f"{missing_text}"
+    )
+
+publish_summary = {
+    "ato": process_ato.publish_web_assets(),
+    "vmt": process_vmt.publish_web_assets(),
+}
+publish_summary
+```
+
+After this step, the Vite app can load both ATO and VMT manifests, Parquet
+metrics, and PMTiles from `_site/public/data/`.
