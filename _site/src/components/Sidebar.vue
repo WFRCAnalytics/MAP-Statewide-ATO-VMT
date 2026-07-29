@@ -19,7 +19,12 @@
           v-for="target in ACCESS_TARGETS"
           :key="target.value"
           class="segmented-button"
-          :class="{ active: accessTarget === target.value }"
+          :class="{
+            active: accessTarget === target.value && !disabledAccessTargets[target.value],
+            disabled: disabledAccessTargets[target.value],
+          }"
+          :disabled="disabledAccessTargets[target.value]"
+          :title="disabledAccessTargets[target.value] ? 'No data for this selection' : target.label"
           @click="$emit('update:accessTarget', target.value)"
         >
           <i :class="`fa-solid ${target.icon}`"></i>
@@ -33,7 +38,12 @@
           v-for="mode in TRAVEL_MODES"
           :key="mode.value"
           class="mode-button"
-          :class="{ active: travelMode === mode.value }"
+          :class="{
+            active: travelMode === mode.value && !disabledTravelModes[mode.value],
+            disabled: disabledTravelModes[mode.value],
+          }"
+          :disabled="disabledTravelModes[mode.value]"
+          :title="disabledTravelModes[mode.value] ? 'No data for this selection' : mode.label"
           @click="$emit('update:travelMode', mode.value)"
         >
           <i :class="`fa-solid ${mode.icon}`"></i>
@@ -71,7 +81,7 @@
       <div class="data-status">
         <div class="data-status-icon"><i class="fa-solid fa-database"></i></div>
         <div>
-          <div class="data-status-title">USTM ATO loaded</div>
+          <div class="data-status-title">{{ modelArea }} ATO loaded</div>
           <p>{{ recordCount.toLocaleString() }} TAZ records available for the current selection.</p>
         </div>
       </div>
@@ -91,6 +101,8 @@ defineProps({
   modelArea: { type: String, required: true },
   accessTarget: { type: String, required: true },
   travelMode: { type: String, required: true },
+  disabledAccessTargets: { type: Object, default: () => ({}) },
+  disabledTravelModes: { type: Object, default: () => ({}) },
   layerVisible: { type: Object, required: true },
   recordCount: { type: Number, default: 0 },
 })

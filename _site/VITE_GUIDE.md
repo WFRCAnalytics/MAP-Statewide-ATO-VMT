@@ -42,19 +42,21 @@ This is the short map of the new `_site` app. The main idea: Vite serves `index.
 
 - `public/data/ato/manifest.json` -- Small data index used by the app. It lists available scenario years, model areas, metric names, and data file paths.
 
-- `public/data/ato/ustm_metrics.parquet` -- Processed USTM ATO values by `ScenarioYear`, `ModelArea`, and `CO_TAZID`.
+- `public/data/ato/ato_metrics.parquet` -- Processed ATO values by `ScenarioYear`, `ModelArea`, and `CO_TAZID`.
 
-- `public/data/ato/ustm_ato_taz.pmtiles` -- PMTiles vector tile archive used by MapLibre to draw simplified CO_TAZID polygons. Each tile feature is one TAZ with year-prefixed metric fields like `y2023_Job_byAuto_norm`.
+- `public/data/ato/ato_taz.pmtiles` -- PMTiles vector tile archive used by MapLibre to draw simplified CO_TAZID polygons. Each tile feature is one model-area TAZ with year-prefixed metric fields like `y2023_Job_byAuto_norm`.
 
-- `public/data/ato/ustm_taz_boundaries.pmtiles` -- Separate PMTiles line archive for cleaner TAZ boundaries. It keeps one lightly simplified boundary feature per TAZ, which is much smaller and faster than the shared-linework experiment.
+- `public/data/ato/ato_taz_boundaries.pmtiles` -- Separate PMTiles line archive for cleaner TAZ boundaries. It keeps one lightly simplified boundary feature per model-area TAZ, which is much smaller and faster than the shared-linework experiment.
 
-- `scripts/process_ustm_ato.py` -- Repeatable data processor. It reads raw USTM CSVs plus the statewide TAZ shapefile, simplifies TAZ geometry for web display, writes canonical processed files to `_data/processed/ato`, then copies the deployable files into `_site/public/data/ato`.
+- `../1-prepare-data-layers.qmd`, `../2-process-ato-layers.qmd`, and `../3-build-web-artifacts.qmd` -- Human-readable processing notebooks at the repo root. They check the raw inputs, build the canonical processed ATO files, then copy the deployable files into `_site/public/data/ato`.
+
+- `../_src/process_ato.py` -- Reusable processing code called by the numbered Quarto pipeline.
 
 ## Data Folder Roles
 
 - `_data/raw/` -- Source model exports and shapefiles. The processor reads from here.
 
-- `_data/processed/ato/` -- Canonical processed ATO outputs. This is the folder to trust for generated data artifacts: `manifest.json`, `ustm_metrics.parquet`, the simplified polygon PMTiles file `ustm_ato_taz.pmtiles`, and the boundary line PMTiles file `ustm_taz_boundaries.pmtiles`.
+- `_data/processed/ato/` -- Canonical processed ATO outputs. This is the folder to trust for generated data artifacts: `manifest.json`, `ato_metrics.parquet`, the simplified polygon PMTiles file `ato_taz.pmtiles`, and the boundary line PMTiles file `ato_taz_boundaries.pmtiles`.
 
 - `_site/public/data/ato/` -- Vite-serving copy. The browser fetches files from here while the app runs, but these files are copied from `_data/processed/ato`.
 
@@ -74,14 +76,14 @@ http://127.0.0.1:5173/
 
 Do not open `index.html` with Live Server for this project. Live Server only serves static files; Vite is needed to compile Vue and bundle JavaScript dependencies.
 
-## How To Rebuild The USTM Data
+## How To Rebuild The ATO Data
 
 Run this from the repo root:
 
 ```powershell
-& 'C:\Users\cday\Anaconda3\python.exe' '_site\scripts\process_ustm_ato.py'
+quarto render
 ```
 
 Then restart or refresh the Vite app.
 
-The PMTiles CLI is required for the tile conversion step. The script looks for `pmtiles` on your `PATH`; it also checks `%TEMP%\map_statewide_ato_tools\pmtiles.exe`, which is where this setup run placed the CLI.
+The PMTiles CLI is required for the tile conversion step. The processor looks for `pmtiles` on your `PATH`; it also checks `%TEMP%\map_statewide_ato_tools\pmtiles.exe`, which is where this setup run placed the CLI.

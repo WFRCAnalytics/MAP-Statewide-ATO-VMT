@@ -1,0 +1,11 @@
+project:
+  type: default
+  render:
+    - "1-prepare-data-layers.qmd"
+    - "2-process-ato-layers.qmd"
+    - "3-build-web-artifacts.qmd"
+
+execute:
+  echo: true
+  warning: true
+  error: true

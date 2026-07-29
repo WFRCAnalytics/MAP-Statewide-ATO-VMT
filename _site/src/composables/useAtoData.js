@@ -73,6 +73,10 @@ export function getAtoMetricProperty(scenarioYear, metricColumn) {
   return `y${Number(scenarioYear)}_${metricColumn}`
 }
 
+export function getAtoMetricAvailabilityProperty(scenarioYear, metricColumn) {
+  return `${getAtoMetricProperty(scenarioYear, metricColumn)}_has`
+}
+
 export function getAtoMetricRange(manifest, scenarioYear, modelArea, metricColumn) {
   const groupedRange = manifest.metric_ranges?.[`${Number(scenarioYear)}|${modelArea}`]?.[metricColumn]
   return {
@@ -80,6 +84,24 @@ export function getAtoMetricRange(manifest, scenarioYear, modelArea, metricColum
     maxValue: Number(groupedRange?.max ?? 0),
     hasRange: Boolean(groupedRange),
   }
+}
+
+export function hasAtoMetricData(manifest, scenarioYear, modelArea, metricColumn) {
+  const { maxValue, hasRange } = getAtoMetricRange(
+    manifest,
+    scenarioYear,
+    modelArea,
+    metricColumn,
+  )
+  const recordCount = Number(
+    manifest.record_counts?.[`${Number(scenarioYear)}|${modelArea}`] ?? 0,
+  )
+
+  return hasRange
+    && recordCount > 0
+    && Number.isFinite(maxValue)
+    && maxValue > 0
+    && Boolean(manifest.files?.pmtiles)
 }
 
 export function getAtoSelectionSummary({ manifest, scenarioYear, modelArea, metricColumn }) {
@@ -99,7 +121,11 @@ export function getAtoSelectionSummary({ manifest, scenarioYear, modelArea, metr
     recordCount,
     minValue,
     maxValue,
-    hasData: hasRange && recordCount > 0 && Boolean(manifest.files?.pmtiles),
+    hasData: hasRange
+      && recordCount > 0
+      && Number.isFinite(maxValue)
+      && maxValue > 0
+      && Boolean(manifest.files?.pmtiles),
   }
 }
 
@@ -128,6 +154,7 @@ export async function loadAtoRows({ scenarioYear, modelArea, metricColumn }) {
     SELECT
       "ScenarioYear",
       "ModelArea",
+      "SA_TAZID",
       "CO_TAZID",
       CAST(${metricIdentifier} AS DOUBLE) AS metric_value
     FROM read_parquet('${metricsUrl}')

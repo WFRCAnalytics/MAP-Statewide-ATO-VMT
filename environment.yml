@@ -1,0 +1,13 @@
+name: map-statewide-ato-vmt
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - duckdb
+  - geopandas
+  - ipykernel
+  - pandas
+  - pyarrow
+  - gdal
+  - quarto
+  - nodejs

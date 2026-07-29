@@ -53,7 +53,7 @@ defineProps({
   hasData: { type: Boolean, default: false },
   is3D: { type: Boolean, default: false },
   opacity: { type: Number, default: 0.78 },
-  pinnedTooltip: { type: Boolean, default: false },
+  pinnedTooltip: { type: Boolean, default: true },
 })
 
 defineEmits(['download', 'screenshot', 'update:is3D', 'update:opacity', 'update:pinnedTooltip'])

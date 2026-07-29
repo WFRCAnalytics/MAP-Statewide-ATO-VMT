@@ -14,4 +14,9 @@ export const MAP_LAYER_DEFS = [
     label: 'Major Roads',
     help: 'Optional major roads layer. Basemap roads are hidden so TAZ boundaries stay readable.',
   },
+  {
+    id: 'overview-map',
+    label: 'Overview Map',
+    help: 'Inset Utah locator map showing the current map extent.',
+  },
 ]

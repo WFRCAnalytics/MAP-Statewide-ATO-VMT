@@ -12,16 +12,18 @@
       :model-area="modelArea"
       :access-target="accessTarget"
       :travel-mode="travelMode"
+      :disabled-access-targets="disabledAccessTargets"
+      :disabled-travel-modes="disabledTravelModes"
       :layer-visible="layerVisible"
       :record-count="recordCount"
       @update:scenarioYear="scenarioYear = $event"
       @update:modelArea="modelArea = $event"
-      @update:accessTarget="accessTarget = $event"
-      @update:travelMode="travelMode = $event"
+      @update:accessTarget="onAccessTargetChange"
+      @update:travelMode="onTravelModeChange"
       @toggle-layer="onToggleLayer"
     />
 
-    <main id="map-area">
+    <main id="map-area" :class="{ 'overview-visible': layerVisible['overview-map'] }">
       <MapControls
         :active-column="activeColumn"
         :has-data="hasData"
@@ -39,7 +41,9 @@
         v-if="mapReady"
         :map="mapInstance"
         :pinned="pinnedTooltip"
+        :model-area="modelArea"
         :scenario-year="scenarioYear"
+        :scenario-years="activeModelScenarioYears"
         :active-column="activeColumn"
       />
       <Legend
@@ -49,6 +53,13 @@
         :max-value="maxValue"
       />
       <LayerControl :layer-visible="layerVisible" @toggle-layer="onToggleLayer" />
+      <OverviewMap
+        v-if="mapReady"
+        :main-map="mapInstance"
+        :visible="layerVisible['overview-map']"
+        :model-bounds="overviewModelBounds"
+        :state-bounds="overviewStateBounds"
+      />
       <div class="empty-state" v-if="!hasData && !isLoading">
         <i class="fa-solid fa-circle-info"></i>
         <span>No ATO data for current selection</span>
@@ -70,10 +81,25 @@ import Sidebar from './components/Sidebar.vue'
 import MapControls from './components/MapControls.vue'
 import LayerControl from './components/LayerControl.vue'
 import Legend from './components/Legend.vue'
+import OverviewMap from './components/OverviewMap.vue'
 import SplashModal from './components/SplashModal.vue'
 import Tooltip from './components/Tooltip.vue'
-import { ACCESS_PALETTE, DATA_BASE_URL, MODEL_AREAS, SCENARIO_YEARS } from './config/constants.js'
-import { getAtoMetricProperty, getAtoSelectionSummary, loadAtoManifest, loadAtoRows } from './composables/useAtoData.js'
+import {
+  ACCESS_PALETTE,
+  ACCESS_TARGETS,
+  DATA_BASE_URL,
+  MODEL_AREAS,
+  SCENARIO_YEARS,
+  TRAVEL_MODES,
+} from './config/constants.js'
+import {
+  getAtoMetricAvailabilityProperty,
+  getAtoMetricProperty,
+  getAtoSelectionSummary,
+  hasAtoMetricData,
+  loadAtoManifest,
+  loadAtoRows,
+} from './composables/useAtoData.js'
 import { findCartoVectorSource, getFirstLabelLayerId, initMap, setExtentBounds } from './composables/useMap.js'
 
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`
@@ -86,7 +112,7 @@ const accessTarget = ref('Job')
 const travelMode = ref('Auto')
 const fillOpacity = ref(0.78)
 const is3D = ref(false)
-const pinnedTooltip = ref(false)
+const pinnedTooltip = ref(true)
 const showSplash = ref(true)
 const isLoading = ref(false)
 const loadingText = ref('Loading...')
@@ -103,10 +129,36 @@ const layerVisible = reactive({
   'ato-fill': true,
   'taz-outline': true,
   'major-roads': false,
+  'overview-map': true,
 })
 
 const activeColumn = computed(() => `${accessTarget.value}_by${travelMode.value}`)
 const activeMetricProperty = computed(() => getAtoMetricProperty(scenarioYear.value, activeColumn.value))
+const activeMetricAvailabilityProperty = computed(() => (
+  getAtoMetricAvailabilityProperty(scenarioYear.value, activeColumn.value)
+))
+const overviewModelBounds = computed(() => getSelectionBounds())
+const overviewStateBounds = computed(() => getManifestBounds())
+const activeModelScenarioYears = computed(() => {
+  const years = atoManifest.value?.scenario_years_by_model_area?.[modelArea.value] ?? scenarioYears.value
+  return [...new Set((years ?? []).map(Number).filter(Number.isFinite))].sort((a, b) => a - b)
+})
+const disabledAccessTargets = computed(() => (
+  Object.fromEntries(
+    ACCESS_TARGETS.map((target) => [
+      target.value,
+      !TRAVEL_MODES.some((mode) => metricHasData(metricColumnFor(target.value, mode.value))),
+    ]),
+  )
+))
+const disabledTravelModes = computed(() => (
+  Object.fromEntries(
+    TRAVEL_MODES.map((mode) => [
+      mode.value,
+      !metricHasData(metricColumnFor(accessTarget.value, mode.value)),
+    ]),
+  )
+))
 
 onMounted(() => {
   mapInstance.value = initMap('map')
@@ -180,6 +232,7 @@ function setupMapLayers() {
       type: 'line',
       source: 'ato-boundary-source',
       'source-layer': boundarySourceLayer,
+      filter: buildAtoFilter(),
       minzoom: 6,
       layout: { visibility: layerVisible['taz-outline'] ? 'visible' : 'none' },
       paint: {
@@ -190,7 +243,7 @@ function setupMapLayers() {
     }, firstLabelId)
   }
 
-  setExtentBounds(getManifestBounds() ?? [[-114.1, 36.9], [-109.0, 42.1]])
+  setExtentBounds(getSelectionBounds() ?? [[-114.1, 36.9], [-109.0, 42.1]])
   mapReady.value = true
 }
 
@@ -210,8 +263,58 @@ async function loadManifestOptions() {
         modelArea.value = modelAreas.value[0]
       }
     }
+    ensureAvailableMetricSelection()
   } catch (error) {
     console.error('Failed to load ATO manifest:', error)
+  }
+}
+
+function metricColumnFor(target, mode) {
+  return `${target}_by${mode}`
+}
+
+function metricHasData(metricColumn) {
+  const manifest = atoManifest.value
+  if (!manifest) return true
+
+  return hasAtoMetricData(
+    manifest,
+    scenarioYear.value,
+    modelArea.value,
+    metricColumn,
+  )
+}
+
+function getFirstAvailableTarget() {
+  return ACCESS_TARGETS.find((target) => (
+    TRAVEL_MODES.some((mode) => metricHasData(metricColumnFor(target.value, mode.value)))
+  ))?.value
+}
+
+function getFirstAvailableMode(target) {
+  return TRAVEL_MODES.find((mode) => (
+    metricHasData(metricColumnFor(target, mode.value))
+  ))?.value
+}
+
+function ensureAvailableMetricSelection() {
+  if (!atoManifest.value) return
+
+  let nextTarget = accessTarget.value
+  if (disabledAccessTargets.value[nextTarget]) {
+    nextTarget = getFirstAvailableTarget() ?? nextTarget
+  }
+
+  let nextMode = travelMode.value
+  if (!metricHasData(metricColumnFor(nextTarget, nextMode))) {
+    nextMode = getFirstAvailableMode(nextTarget) ?? nextMode
+  }
+
+  if (nextTarget !== accessTarget.value) {
+    accessTarget.value = nextTarget
+  }
+  if (nextMode !== travelMode.value) {
+    travelMode.value = nextMode
   }
 }
 
@@ -281,7 +384,11 @@ function buildExtrusionExpression() {
 }
 
 function buildAtoFilter() {
-  return ['has', activeMetricProperty.value]
+  return [
+    'all',
+    ['==', ['get', 'ModelArea'], modelArea.value],
+    ['==', ['to-number', ['coalesce', ['get', activeMetricAvailabilityProperty.value], 0]], 1],
+  ]
 }
 
 function refreshAtoLayer({ fit = false } = {}) {
@@ -303,9 +410,10 @@ function refreshAtoLayer({ fit = false } = {}) {
     maxValue.value = result.maxValue
     hasData.value = result.hasData
     refreshStyleExpressions()
+    setExtentBounds(getSelectionBounds() ?? getManifestBounds())
 
-    if (fit && hasData.value) {
-      fitToManifestBounds()
+    if (fit) {
+      fitToSelectionBounds()
     }
   } catch (error) {
     console.error('Failed to refresh ATO layer:', error)
@@ -325,12 +433,24 @@ function getManifestBounds() {
   return [[minLng, minLat], [maxLng, maxLat]]
 }
 
-function fitToManifestBounds() {
+function getSelectionBounds() {
+  const bounds = atoManifest.value?.model_area_bounds?.[modelArea.value]
+  if (!Array.isArray(bounds) || bounds.length !== 4) return getManifestBounds()
+  const [minLng, minLat, maxLng, maxLat] = bounds.map(Number)
+  if (![minLng, minLat, maxLng, maxLat].every(Number.isFinite)) return getManifestBounds()
+  return [[minLng, minLat], [maxLng, maxLat]]
+}
+
+function fitToSelectionBounds() {
   const map = mapInstance.value
-  const mapBounds = getManifestBounds()
+  const mapBounds = getSelectionBounds()
   if (!map || !mapBounds) return
   setExtentBounds(mapBounds)
-  map.fitBounds(mapBounds, { padding: 35, maxZoom: 10, duration: 700 })
+  map.fitBounds(mapBounds, {
+    padding: 35,
+    maxZoom: modelArea.value === 'Statewide' ? 10 : 11,
+    duration: 700,
+  })
 }
 
 function refreshStyleExpressions() {
@@ -347,6 +467,9 @@ function refreshStyleExpressions() {
     map.setPaintProperty('ato-taz-extrusion', 'fill-extrusion-color', buildAccessColorExpression())
     map.setPaintProperty('ato-taz-extrusion', 'fill-extrusion-height', buildExtrusionExpression())
     map.setPaintProperty('ato-taz-extrusion', 'fill-extrusion-opacity', fillOpacity.value)
+  }
+  if (map.getLayer('ato-taz-line')) {
+    map.setFilter('ato-taz-line', filter)
   }
 }
 
@@ -390,6 +513,17 @@ function onOpacityChange(value) {
   refreshStyleExpressions()
 }
 
+function onAccessTargetChange(value) {
+  if (disabledAccessTargets.value[value]) return
+  accessTarget.value = value
+  ensureAvailableMetricSelection()
+}
+
+function onTravelModeChange(value) {
+  if (disabledTravelModes.value[value]) return
+  travelMode.value = value
+}
+
 async function onDownload() {
   if (!hasData.value) return
   isLoading.value = true
@@ -404,12 +538,13 @@ async function onDownload() {
     const rows = result.rows
     selectedRows.value = rows
 
-    const columns = ['ScenarioYear', 'ModelArea', 'CO_TAZID', activeColumn.value, 'access_value']
+    const columns = ['ScenarioYear', 'ModelArea', 'SA_TAZID', 'CO_TAZID', activeColumn.value, 'access_value']
     const header = columns.join(',')
     const body = rows
       .map((row) => [
         row.ScenarioYear,
         row.ModelArea,
+        row.SA_TAZID,
         row.CO_TAZID,
         row.metric_value,
         row.access_value,
@@ -419,7 +554,7 @@ async function onDownload() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `USTM_ATO_${scenarioYear.value}_${activeColumn.value}.csv`
+    link.download = `ATO_${modelArea.value.replace(/[^A-Za-z0-9]+/g, '_')}_${scenarioYear.value}_${activeColumn.value}.csv`
     link.click()
     URL.revokeObjectURL(url)
   } catch (error) {
@@ -441,5 +576,13 @@ function onScreenshot() {
   map.triggerRepaint()
 }
 
-watch([scenarioYear, modelArea, activeColumn], () => refreshAtoLayer({ fit: true }))
+watch(scenarioYear, () => {
+  ensureAvailableMetricSelection()
+  refreshAtoLayer({ fit: false })
+})
+watch(activeColumn, () => refreshAtoLayer({ fit: false }))
+watch(modelArea, () => {
+  ensureAvailableMetricSelection()
+  refreshAtoLayer({ fit: true })
+})
 </script>

@@ -1,0 +1,43 @@
+---
+title: "3 - Build Web Artifacts"
+format: html
+jupyter: python3
+---
+
+This step publishes the canonical processed ATO artifacts into the Vite app's
+static data folder. Files in `_site/public/data/` are served directly by the
+browser at runtime.
+
+This step does not recompute metrics or PMTiles. Run
+`2-process-ato-layers.qmd` first when raw data has changed.
+
+```{python}
+from _src.process_ato import (
+    BOUNDARY_PMTILES_FILENAME,
+    FILL_PMTILES_FILENAME,
+    METRICS_FILENAME,
+    PROCESSED_DIR,
+    publish_web_assets,
+)
+
+expected_files = [
+    PROCESSED_DIR / "manifest.json",
+    PROCESSED_DIR / METRICS_FILENAME,
+    PROCESSED_DIR / FILL_PMTILES_FILENAME,
+    PROCESSED_DIR / BOUNDARY_PMTILES_FILENAME,
+]
+
+missing = [path for path in expected_files if not path.exists()]
+if missing:
+    missing_text = "\n".join(f"  - {path}" for path in missing)
+    raise FileNotFoundError(
+        "Missing processed artifacts. Run 2-process-ato-layers.qmd first.\n"
+        f"{missing_text}"
+    )
+
+publish_summary = publish_web_assets()
+publish_summary
+```
+
+After this step, the Vite app can load the manifest, Parquet metrics, and
+PMTiles from `_site/public/data/ato/`.

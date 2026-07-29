@@ -1,0 +1,30 @@
+---
+title: "1 - Prepare Data Layers"
+format: html
+jupyter: python3
+---
+
+This first step documents the raw files needed to rebuild the Access to
+Opportunity web-map data. The web app does not run this work directly; these
+checks are part of the offline data pipeline.
+
+The expected raw inputs live under `_data/raw/`:
+
+- Statewide TAZ polygons from `_data/raw/statewide TAZ/`
+- ATO CSVs from `_data/raw/0 - USTM/`, `_data/raw/1 - WF/`, `_data/raw/2 - CA/`,
+  `_data/raw/3 - DX/`, `_data/raw/4 - WB/`, and `_data/raw/5 - IR/`
+
+Cache currently has 2023 and 2028 ATO files in the raw data folder. There is no
+2019 Cache ATO file in the current source data, so the pipeline does not expect
+one.
+
+```{python}
+from _src.process_ato import RAW_ROOT, validate_raw_inputs
+
+print(f"Raw data root: {RAW_ROOT}")
+raw_inputs = validate_raw_inputs()
+raw_inputs
+```
+
+If this step fails, place the missing files in the paths shown by the error and
+rerun this document before continuing.

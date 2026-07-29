@@ -2,7 +2,7 @@
   <div v-if="hasData" id="map-legend">
     <div class="legend-title">{{ metricLabel }}</div>
     <div class="legend-items">
-      <div v-for="item in legendItems" :key="item.label" class="legend-item">
+      <div v-for="(item, index) in legendItems" :key="`${index}-${item.label}`" class="legend-item">
         <span class="legend-swatch" :style="{ background: item.color }"></span>
         <span class="legend-label">{{ item.label }}</span>
       </div>
@@ -26,13 +26,30 @@ function formatNumber(value) {
   return Math.round(value).toLocaleString()
 }
 
+function getRoundingStep(span) {
+  const absoluteSpan = Math.abs(span)
+  if (absoluteSpan >= 25_000) return 5_000
+  if (absoluteSpan >= 5_000) return 1_000
+  if (absoluteSpan >= 1_000) return 500
+  if (absoluteSpan >= 100) return 50
+  if (absoluteSpan >= 10) return 5
+  return 1
+}
+
+function roundToStep(value, step) {
+  if (!Number.isFinite(value)) return 0
+  return Math.round(value / step) * step
+}
+
 const legendItems = computed(() => {
   const span = props.maxValue - props.minValue
+  const step = getRoundingStep(span)
+
   return ACCESS_PALETTE.map((color, index) => {
     const value = span > 0
       ? props.minValue + (span * index) / (ACCESS_PALETTE.length - 1)
       : props.minValue
-    return { color, label: formatNumber(value) }
+    return { color, label: formatNumber(roundToStep(value, step)) }
   })
 })
 </script>
