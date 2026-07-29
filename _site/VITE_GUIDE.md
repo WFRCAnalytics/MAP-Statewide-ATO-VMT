@@ -4,7 +4,7 @@ This is the short map of the new `_site` app. The main idea: Vite serves `index.
 
 - `index.html` -- The required HTML shell for the app. It has the `<div id="app"></div>` mount point where Vue places the whole interface.
 
-- `package.json` -- Lists the app commands and JavaScript dependencies. The big commands are `npm run dev` for previewing and `npm run build` for making production files.
+- `package.json` -- Lists the app commands and JavaScript dependencies. The big commands are `npm run dev` for previewing and `npm run build` for making production files and copying them to `../docs/`.
 
 - `package-lock.json` -- Locks exact dependency versions so the app installs the same way next time.
 
@@ -85,6 +85,18 @@ http://127.0.0.1:5173/
 ```
 
 Do not open `index.html` with Live Server for this project. Live Server only serves static files; Vite is needed to compile Vue and bundle JavaScript dependencies.
+
+## How To Publish To GitHub Pages
+
+Run this from the `_site` folder:
+
+```powershell
+npm run build
+```
+
+This builds the app into `_site/dist`, removes the old `../docs/` contents, and
+copies the fresh static site into `../docs/`. Commit the changed `docs/` files
+afterward so GitHub Pages can serve the new version from the branch.
 
 ## How To Rebuild The ATO/VMT Data
 

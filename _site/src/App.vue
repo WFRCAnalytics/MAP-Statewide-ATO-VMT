@@ -5,7 +5,7 @@
   </nav>
 
   <div id="app-layout">
-      <Sidebar
+    <Sidebar
       :dataset-mode="datasetMode"
       :scenario-years="scenarioYears"
       :model-areas="modelAreas"
@@ -17,15 +17,18 @@
       :disabled-access-targets="disabledAccessTargets"
       :disabled-travel-modes="disabledTravelModes"
       :disabled-vmt-periods="disabledVmtPeriods"
-      :layer-visible="layerVisible"
       :record-count="recordCount"
+      :active-taz-properties="activeTazProperties"
+      :dataset-label="activeDatasetLabel"
+      :active-column="activeColumn"
+      :metric-label="activeMetricLabel"
+      :trend-scenario-years="activeModelScenarioYears"
       @update:datasetMode="onDatasetModeChange"
       @update:scenarioYear="scenarioYear = $event"
       @update:modelArea="modelArea = $event"
       @update:accessTarget="onAccessTargetChange"
       @update:travelMode="onTravelModeChange"
       @update:vmtPeriod="onVmtPeriodChange"
-      @toggle-layer="onToggleLayer"
     />
 
     <main id="map-area" :class="{ 'overview-visible': layerVisible['overview-map'] }">
@@ -47,12 +50,11 @@
         :map="mapInstance"
         :pinned="pinnedTooltip"
         :dataset-mode="datasetMode"
-        :dataset-label="activeDatasetLabel"
         :model-area="modelArea"
         :scenario-year="scenarioYear"
-        :scenario-years="activeModelScenarioYears"
         :active-column="activeColumn"
         :metric-label="activeMetricLabel"
+        @feature-hover="activeTazProperties = $event"
       />
       <Legend
         :has-data="hasData"
@@ -125,7 +127,7 @@ const travelMode = ref('Auto')
 const vmtPeriod = ref('DY_VMT')
 const fillOpacity = ref(0.78)
 const is3D = ref(false)
-const pinnedTooltip = ref(true)
+const pinnedTooltip = ref(false)
 const showSplash = ref(true)
 const isLoading = ref(false)
 const loadingText = ref('Loading...')
@@ -136,6 +138,7 @@ const recordCount = ref(0)
 const minValue = ref(0)
 const maxValue = ref(0)
 const selectedRows = ref([])
+const activeTazProperties = ref(null)
 const manifests = reactive({
   ato: null,
   vmt: null,
@@ -676,6 +679,7 @@ function onScreenshot() {
 }
 
 watch(datasetMode, () => {
+  activeTazProperties.value = null
   ensureAvailableMetricSelection()
   refreshDataLayer({ fit: false })
 })
@@ -685,6 +689,7 @@ watch(scenarioYear, () => {
 })
 watch(activeColumn, () => refreshDataLayer({ fit: false }))
 watch(modelArea, () => {
+  activeTazProperties.value = null
   ensureAvailableMetricSelection()
   refreshDataLayer({ fit: true })
 })

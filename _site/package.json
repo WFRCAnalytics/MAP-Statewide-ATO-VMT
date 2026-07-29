@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run build:site && npm run copy:docs",
+    "build:site": "vite build",
+    "copy:docs": "node scripts/copy-build-to-docs.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

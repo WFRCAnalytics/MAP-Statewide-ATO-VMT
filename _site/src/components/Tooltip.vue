@@ -13,22 +13,19 @@
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
-import {
-  getMetricAvailabilityProperty,
-  getMetricProperty,
-} from '../composables/useAtoData.js'
+import { getMetricProperty } from '../composables/useAtoData.js'
 
 const props = defineProps({
   map: { type: Object, required: true },
   pinned: { type: Boolean, default: false },
   datasetMode: { type: String, default: 'ato' },
-  datasetLabel: { type: String, default: 'ATO' },
   modelArea: { type: String, required: true },
   scenarioYear: { type: Number, required: true },
-  scenarioYears: { type: Array, default: () => [] },
   activeColumn: { type: String, required: true },
   metricLabel: { type: String, required: true },
 })
+
+const emit = defineEmits(['feature-hover'])
 
 const pinnedContent = ref('')
 const placeholder = '<div class="tooltip-placeholder"><i class="fa-solid fa-hand-pointer"></i><br>Hover over a TAZ</div>'
@@ -45,19 +42,6 @@ function formatValue(value) {
   return Math.round(number).toLocaleString()
 }
 
-function formatCompactValue(value) {
-  const number = Number(value)
-  if (!Number.isFinite(number)) return ''
-  const absolute = Math.abs(number)
-  if (absolute >= 1_000_000) {
-    return `${(number / 1_000_000).toFixed(absolute >= 10_000_000 ? 0 : 1)}M`
-  }
-  if (absolute >= 1_000) {
-    return `${(number / 1_000).toFixed(absolute >= 100_000 ? 0 : 1)}k`
-  }
-  return Math.round(number).toLocaleString()
-}
-
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, (character) => ({
     '&': '&amp;',
@@ -66,118 +50,6 @@ function escapeHTML(value) {
     '"': '&quot;',
     "'": '&#39;',
   })[character])
-}
-
-function getChartYears() {
-  const years = props.scenarioYears.length ? props.scenarioYears : [props.scenarioYear]
-  return [...new Set(years.map(Number).filter(Number.isFinite))].sort((a, b) => a - b)
-}
-
-function getYearMetricValue(properties, year) {
-  const valueProperty = getMetricProperty(year, props.activeColumn)
-  const availabilityProperty = getMetricAvailabilityProperty(year, props.activeColumn)
-  const availability = properties[availabilityProperty]
-  const isAvailable = availability === undefined || availability === null || Number(availability) === 1
-  const value = Number(properties[valueProperty])
-
-  if (!isAvailable || !Number.isFinite(value)) return null
-  return value
-}
-
-function buildYearSeries(properties) {
-  return getChartYears()
-    .map((year) => ({
-      year,
-      value: getYearMetricValue(properties, year),
-    }))
-    .filter((point) => point.value !== null)
-}
-
-function buildLineChart(properties) {
-  const series = buildYearSeries(properties)
-
-  if (!series.length) {
-    return `
-      <div class="tooltip-chart">
-        <div class="tooltip-chart-title">${escapeHTML(props.datasetLabel)} trend</div>
-        <div class="tooltip-chart-empty">No year values available</div>
-      </div>
-    `
-  }
-
-  const width = 248
-  const height = 96
-  const left = 38
-  const right = 14
-  const top = 12
-  const bottom = 22
-  const innerWidth = width - left - right
-  const innerHeight = height - top - bottom
-  const years = series.map((point) => point.year)
-  const values = series.map((point) => point.value)
-  const minYear = Math.min(...years)
-  const maxYear = Math.max(...years)
-  const minValue = Math.min(...values)
-  const maxValue = Math.max(...values)
-  const yearSpread = maxYear - minYear
-  const valueSpread = maxValue - minValue
-
-  const scaleX = (year) => (
-    yearSpread > 0
-      ? left + ((year - minYear) / yearSpread) * innerWidth
-      : left + innerWidth / 2
-  )
-  const scaleY = (value) => (
-    valueSpread > 0
-      ? top + ((maxValue - value) / valueSpread) * innerHeight
-      : top + innerHeight / 2
-  )
-
-  const points = series.map((point) => ({
-    ...point,
-    x: scaleX(point.year),
-    y: scaleY(point.value),
-    current: Number(point.year) === Number(props.scenarioYear),
-  }))
-  const linePoints = points.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' ')
-  const line = points.length > 1
-    ? `<polyline class="tooltip-chart-line" points="${linePoints}"></polyline>`
-    : ''
-  const circles = points.map((point) => `
-    <circle
-      class="tooltip-chart-point${point.current ? ' current' : ''}"
-      cx="${point.x.toFixed(1)}"
-      cy="${point.y.toFixed(1)}"
-      r="${point.current ? 4.5 : 3.2}"
-    >
-      <title>${point.year}: ${escapeHTML(formatValue(point.value))}</title>
-    </circle>
-  `).join('')
-  const labels = points.map((point) => `
-    <text
-      class="tooltip-chart-year${point.current ? ' current' : ''}"
-      x="${point.x.toFixed(1)}"
-      y="${height - 5}"
-    >${point.year}</text>
-  `).join('')
-
-  return `
-    <div class="tooltip-chart">
-      <div class="tooltip-chart-title">
-        <span>${escapeHTML(props.datasetLabel)} trend</span>
-        <strong>${minYear}${minYear === maxYear ? '' : `-${maxYear}`}</strong>
-      </div>
-      <svg class="tooltip-year-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHTML(props.metricLabel)} by year">
-        <line class="tooltip-chart-grid" x1="${left}" y1="${top}" x2="${width - right}" y2="${top}"></line>
-        <line class="tooltip-chart-grid" x1="${left}" y1="${top + innerHeight}" x2="${width - right}" y2="${top + innerHeight}"></line>
-        <text class="tooltip-chart-value-label" x="4" y="${top + 4}">${escapeHTML(formatCompactValue(maxValue))}</text>
-        <text class="tooltip-chart-value-label" x="4" y="${top + innerHeight + 4}">${escapeHTML(formatCompactValue(minValue))}</text>
-        ${line}
-        ${circles}
-        ${labels}
-      </svg>
-    </div>
-  `
 }
 
 function buildHTML(properties) {
@@ -196,7 +68,6 @@ function buildHTML(properties) {
         <span>${props.scenarioYear} ${escapeHTML(props.metricLabel)}</span>
         <strong>${escapeHTML(formatValue(value))}</strong>
       </div>
-      ${buildLineChart(properties)}
     </div>
   `
 }
@@ -219,6 +90,7 @@ onMounted(() => {
     if (!event.features?.length) return
     props.map.getCanvas().style.cursor = 'pointer'
     lastProperties = event.features[0].properties ?? {}
+    emit('feature-hover', lastProperties)
     const html = buildHTML(lastProperties)
     if (props.pinned) {
       pinnedContent.value = html
@@ -260,13 +132,14 @@ watch(() => props.pinned, (pinned) => {
 })
 
 watch(
-  [() => props.scenarioYear, () => props.activeColumn, () => props.metricLabel, () => props.scenarioYears],
+  [() => props.scenarioYear, () => props.activeColumn, () => props.metricLabel],
   refreshPinnedContent,
 )
 
 watch([() => props.modelArea, () => props.datasetMode], () => {
   lastProperties = null
   pinnedContent.value = ''
+  emit('feature-hover', null)
   popup?.remove()
 })
 </script>

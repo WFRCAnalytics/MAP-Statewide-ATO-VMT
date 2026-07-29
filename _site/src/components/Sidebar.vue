@@ -85,30 +85,15 @@
         </button>
       </div>
 
-      <div class="accordion">
-        <div class="accordion-item">
-          <button class="accordion-button" @click="layerPanelOpen = !layerPanelOpen">
-            <span>Map Layers</span>
-            <i :class="layerPanelOpen ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"></i>
-          </button>
-          <div v-show="layerPanelOpen" class="accordion-body">
-            <div v-for="layer in MAP_LAYER_DEFS" :key="layer.id" class="toggle-row">
-              <div class="toggle-row-label">
-                <span>{{ layer.label }}</span>
-                <i class="fa-regular fa-circle-question help-icon" v-tooltip="layer.help"></i>
-              </div>
-              <button
-                class="layer-toggle-btn"
-                :class="{ active: layerVisible[layer.id] }"
-                :title="`Toggle ${layer.label}`"
-                @click="$emit('toggle-layer', layer.id)"
-              >
-                <i :class="layerVisible[layer.id] ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <TrendChart
+        :properties="activeTazProperties"
+        :dataset-label="datasetLabel"
+        :model-area="modelArea"
+        :scenario-year="scenarioYear"
+        :scenario-years="trendScenarioYears"
+        :active-column="activeColumn"
+        :metric-label="metricLabel"
+      />
 
       <hr class="sidebar-hr" />
 
@@ -124,7 +109,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import TrendChart from './TrendChart.vue'
 import {
   ACCESS_TARGETS,
   DATASETS,
@@ -133,7 +118,6 @@ import {
   TRAVEL_MODES,
   VMT_PERIODS,
 } from '../config/constants.js'
-import { MAP_LAYER_DEFS } from '../config/layers.js'
 
 defineProps({
   datasetMode: { type: String, default: 'ato' },
@@ -147,8 +131,12 @@ defineProps({
   disabledAccessTargets: { type: Object, default: () => ({}) },
   disabledTravelModes: { type: Object, default: () => ({}) },
   disabledVmtPeriods: { type: Object, default: () => ({}) },
-  layerVisible: { type: Object, required: true },
   recordCount: { type: Number, default: 0 },
+  activeTazProperties: { type: Object, default: null },
+  datasetLabel: { type: String, default: 'ATO' },
+  activeColumn: { type: String, required: true },
+  metricLabel: { type: String, required: true },
+  trendScenarioYears: { type: Array, default: () => [] },
 })
 
 defineEmits([
@@ -158,8 +146,5 @@ defineEmits([
   'update:accessTarget',
   'update:travelMode',
   'update:vmtPeriod',
-  'toggle-layer',
 ])
-
-const layerPanelOpen = ref(true)
 </script>

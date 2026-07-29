@@ -65,3 +65,14 @@ cd _site
 npm install
 npm run dev
 ```
+
+`npm run dev` starts the local Vite preview server for editing. When changes
+are ready for GitHub Pages, build the app from `_site`:
+
+```bash
+npm run build
+```
+
+That command creates the production Vite bundle and overwrites `../docs/`,
+which is the branch folder GitHub Pages serves. Commit the updated `docs/`
+files along with the source changes.

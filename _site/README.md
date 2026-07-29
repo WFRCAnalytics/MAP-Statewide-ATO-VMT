@@ -20,6 +20,15 @@ npm install
 npm run dev
 ```
 
+## Publish to GitHub Pages
+
+```bash
+npm run build
+```
+
+The build command creates the production Vite bundle, then overwrites
+`../docs/` with the static files GitHub Pages serves from the branch.
+
 ## Data
 
 The data pipeline lives at the repository root in the numbered Quarto files.
