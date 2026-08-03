@@ -244,7 +244,7 @@ def build_tile_features(
         if column.endswith("_has"):
             tile_gdf[column] = tile_gdf[column].fillna(0).astype("int8")
         elif column.endswith("_norm"):
-            tile_gdf[column] = tile_gdf[column].fillna(0).astype("float32")
+            tile_gdf[column] = tile_gdf[column].fillna(0).astype("float32").round(3)
         elif column.startswith("y"):
             tile_gdf[column] = pd.to_numeric(
                 tile_gdf[column],

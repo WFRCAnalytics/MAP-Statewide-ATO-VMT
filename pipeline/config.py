@@ -60,7 +60,7 @@ MODEL_AREA_ORDER = [config["name"] for config in MODEL_AREA_CONFIGS]
 # PMTiles zoom levels and simplification tolerances are shared so the ATO and
 # VMT layers stay visually/behaviorally consistent in the web map.
 PMTILES_MINZOOM = 0
-PMTILES_MAXZOOM = 11
-BOUNDARY_PMTILES_MAXZOOM = 12
-TAZ_FILL_SIMPLIFY_TOLERANCE = 0.0005
+PMTILES_MAXZOOM = 10
+BOUNDARY_PMTILES_MAXZOOM = 11
+TAZ_FILL_SIMPLIFY_TOLERANCE = 0.00071
 TAZ_BOUNDARY_SIMPLIFY_TOLERANCE = 0.00015

@@ -1,5 +1,8 @@
 {
-  "generated_at": "2026-07-28T14:18:46.418787+00:00",
+  "generated_at": "2026-08-03T17:37:29.214458+00:00",
+  "dataset": "ato",
+  "dataset_label": "ATO",
+  "dataset_title": "Access to Opportunity",
   "model_areas": [
     "Statewide",
     "Wasatch Front",
@@ -657,14 +660,14 @@
     -114.05280297187916,
     36.99765748027139,
     -109.0417845699252,
-    42.001703500689224
+    42.00170207959738
   ],
   "model_area_bounds": {
     "Statewide": [
       -114.05280297187916,
       36.99765748027139,
       -109.0417845699252,
-      42.001703500689224
+      42.00170207959738
     ],
     "Wasatch Front": [
       -112.25847100324647,
@@ -687,7 +690,7 @@
     "Summit Wasatch": [
       -111.6491287296899,
       39.899654197615284,
-      -109.99877798189132,
+      -109.99899093445956,
       41.25162932312471
     ],
     "Iron": [
@@ -713,17 +716,17 @@
   "pmtiles": {
     "source_layer": "ato_taz",
     "minzoom": 0,
-    "maxzoom": 11,
+    "maxzoom": 10,
     "feature_model": "wide_taz_by_model_area_and_year",
     "feature_count": 16047,
-    "simplify_tolerance": 0.0005,
+    "simplify_tolerance": 0.00071,
     "property_template": "y{ScenarioYear}_{MetricColumn}",
     "availability_property_template": "y{ScenarioYear}_{MetricColumn}_has"
   },
   "boundary_pmtiles": {
     "source_layer": "ato_taz_boundary",
     "minzoom": 0,
-    "maxzoom": 12,
+    "maxzoom": 11,
     "feature_count": 16047,
     "simplify_tolerance": 0.00015,
     "simplification_method": "per_taz_boundary"

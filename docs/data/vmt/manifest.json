@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-29T17:44:42.398672+00:00",
+  "generated_at": "2026-08-03T17:39:29.728190+00:00",
   "dataset": "vmt",
   "dataset_label": "VMT",
   "dataset_title": "Vehicle Miles Traveled",
@@ -453,14 +453,14 @@
     -114.05280297187916,
     36.99765748027139,
     -109.0417845699252,
-    42.001703500689224
+    42.00170207959738
   ],
   "model_area_bounds": {
     "Statewide": [
       -114.05280297187916,
       36.99765748027139,
       -109.0417845699252,
-      42.001703500689224
+      42.00170207959738
     ],
     "Wasatch Front": [
       -112.49351741368675,
@@ -483,7 +483,7 @@
     "Summit Wasatch": [
       -111.6491287296899,
       39.899654197615284,
-      -109.99877798189132,
+      -109.99899093445956,
       41.25162932312471
     ],
     "Iron": [
@@ -509,17 +509,17 @@
   "pmtiles": {
     "source_layer": "vmt_taz",
     "minzoom": 0,
-    "maxzoom": 11,
+    "maxzoom": 10,
     "feature_model": "wide_taz_by_model_area_and_year",
     "feature_count": 16048,
-    "simplify_tolerance": 0.0005,
+    "simplify_tolerance": 0.00071,
     "property_template": "y{ScenarioYear}_{MetricColumn}",
     "availability_property_template": "y{ScenarioYear}_{MetricColumn}_has"
   },
   "boundary_pmtiles": {
     "source_layer": "vmt_taz_boundary",
     "minzoom": 0,
-    "maxzoom": 12,
+    "maxzoom": 11,
     "feature_count": 16048,
     "simplify_tolerance": 0.00015,
     "simplification_method": "per_taz_boundary"
