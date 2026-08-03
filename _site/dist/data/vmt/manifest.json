@@ -1,0 +1,527 @@
+{
+  "generated_at": "2026-08-03T17:39:29.728190+00:00",
+  "dataset": "vmt",
+  "dataset_label": "VMT",
+  "dataset_title": "Vehicle Miles Traveled",
+  "model_areas": [
+    "Statewide",
+    "Wasatch Front",
+    "Cache",
+    "Dixie",
+    "Summit Wasatch",
+    "Iron"
+  ],
+  "scenario_years": [
+    2019,
+    2023,
+    2028
+  ],
+  "scenario_years_by_model_area": {
+    "Statewide": [
+      2019,
+      2023,
+      2028
+    ],
+    "Wasatch Front": [
+      2019,
+      2023,
+      2028
+    ],
+    "Cache": [
+      2023,
+      2028
+    ],
+    "Dixie": [
+      2019,
+      2023,
+      2028
+    ],
+    "Summit Wasatch": [
+      2019,
+      2023,
+      2028
+    ],
+    "Iron": [
+      2019,
+      2023,
+      2028
+    ]
+  },
+  "metrics": [
+    "AM_VMT",
+    "MD_VMT",
+    "PM_VMT",
+    "EV_VMT",
+    "DY_VMT"
+  ],
+  "metric_ranges": {
+    "2019|Dixie": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 28309.61
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 40326.509840000006
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 26258.980000000003
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 23821.25
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 118716.36850999999
+      }
+    },
+    "2019|Iron": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 27895.009999999995
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 42969.25
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 30810.550000000003
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 31053.819999999996
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 132728.64195
+      }
+    },
+    "2019|Statewide": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 68611.994
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 155936.16181
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 103876.79849
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 115239.17587999998
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 443664.13068000006
+      }
+    },
+    "2019|Summit Wasatch": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 46472.54999999999
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 68510.87030999998
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 51424.27000000002
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 50285.41
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 216693.15891
+      }
+    },
+    "2019|Wasatch Front": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 58151.469059999996
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 106942.06984000003
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 72236.95061999999
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 85075.27891
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 321992.87390000006
+      }
+    },
+    "2023|Cache": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 12276.16
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 25329.910000000003
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 18227.43
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 16783.379999999997
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 72616.87985
+      }
+    },
+    "2023|Dixie": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 29788.48
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 43614.79078000001
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 27985.31
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 25532.679999999997
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 126921.24898000002
+      }
+    },
+    "2023|Iron": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 29878.44999999999
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 45920.580000000016
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 33015.79
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 33190.509999999995
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 142005.33985000002
+      }
+    },
+    "2023|Statewide": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 70540.09299999998
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 159999.15300000002
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 106360.87986
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 118516.19639
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 455416.33084000007
+      }
+    },
+    "2023|Summit Wasatch": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 49407.64
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 72877.50992
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 54709.03999999999
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 53490.990000000005
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 230485.19867000004
+      }
+    },
+    "2023|Wasatch Front": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 65459.17085999999
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 119632.62108999999
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 80938.29993000001
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 93091.79906
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 359121.89288999996
+      }
+    },
+    "2028|Cache": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 13282.630000000001
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 27464.01
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 19725.35
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 18197.13
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 78669.12117
+      }
+    },
+    "2028|Dixie": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 33309.229999999996
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 50682.979999999996
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 31688.07
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 29860.160310000003
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 143294.98985
+      }
+    },
+    "2028|Iron": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 32764.270000000004
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 50487.56063000003
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 36203.079999999994
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 36489.05999999999
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 155943.95157000003
+      }
+    },
+    "2028|Statewide": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 74431.88999999997
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 168296.98041999998
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 111178.28667
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 124556.26843
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 478463.4238
+      }
+    },
+    "2028|Summit Wasatch": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 52620.71000000002
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 77659.56961000004
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 58306.8
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 56999.26999999998
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 245586.40210999997
+      }
+    },
+    "2028|Wasatch Front": {
+      "AM_VMT": {
+        "min": 0.0,
+        "max": 64730.33038999999
+      },
+      "MD_VMT": {
+        "min": 0.0,
+        "max": 114791.16133
+      },
+      "PM_VMT": {
+        "min": 0.0,
+        "max": 83160.47977000002
+      },
+      "EV_VMT": {
+        "min": 0.0,
+        "max": 88754.5193
+      },
+      "DY_VMT": {
+        "min": 0.0,
+        "max": 346766.04210999986
+      }
+    }
+  },
+  "record_counts": {
+    "2019|Dixie": 815,
+    "2019|Iron": 360,
+    "2019|Statewide": 9760,
+    "2019|Summit Wasatch": 593,
+    "2019|Wasatch Front": 3545,
+    "2023|Cache": 949,
+    "2023|Dixie": 821,
+    "2023|Iron": 360,
+    "2023|Statewide": 9763,
+    "2023|Summit Wasatch": 593,
+    "2023|Wasatch Front": 3546,
+    "2028|Cache": 948,
+    "2028|Dixie": 838,
+    "2028|Iron": 360,
+    "2028|Statewide": 9760,
+    "2028|Summit Wasatch": 593,
+    "2028|Wasatch Front": 3546
+  },
+  "bounds": [
+    -114.05280297187916,
+    36.99765748027139,
+    -109.0417845699252,
+    42.00170207959738
+  ],
+  "model_area_bounds": {
+    "Statewide": [
+      -114.05280297187916,
+      36.99765748027139,
+      -109.0417845699252,
+      42.00170207959738
+    ],
+    "Wasatch Front": [
+      -112.49351741368675,
+      39.77624623464842,
+      -110.8576466505277,
+      41.607077381751864
+    ],
+    "Cache": [
+      -112.1661075219941,
+      41.36881615073432,
+      -111.4015237451368,
+      41.999553994784634
+    ],
+    "Dixie": [
+      -114.05280297187916,
+      36.99995857709036,
+      -112.89907354976138,
+      37.61828901761399
+    ],
+    "Summit Wasatch": [
+      -111.6491287296899,
+      39.899654197615284,
+      -109.99899093445956,
+      41.25162932312471
+    ],
+    "Iron": [
+      -114.0523499918645,
+      37.47429800067204,
+      -112.46700988487184,
+      38.148762871479086
+    ]
+  },
+  "model_area_feature_counts": {
+    "Statewide": 9768,
+    "Wasatch Front": 3546,
+    "Cache": 943,
+    "Dixie": 838,
+    "Summit Wasatch": 593,
+    "Iron": 360
+  },
+  "files": {
+    "metrics": "vmt/vmt_metrics.parquet",
+    "pmtiles": "vmt/vmt_taz.pmtiles",
+    "boundaries_pmtiles": "vmt/vmt_taz_boundaries.pmtiles"
+  },
+  "pmtiles": {
+    "source_layer": "vmt_taz",
+    "minzoom": 0,
+    "maxzoom": 10,
+    "feature_model": "wide_taz_by_model_area_and_year",
+    "feature_count": 16048,
+    "simplify_tolerance": 0.00071,
+    "property_template": "y{ScenarioYear}_{MetricColumn}",
+    "availability_property_template": "y{ScenarioYear}_{MetricColumn}_has"
+  },
+  "boundary_pmtiles": {
+    "source_layer": "vmt_taz_boundary",
+    "minzoom": 0,
+    "maxzoom": 11,
+    "feature_count": 16048,
+    "simplify_tolerance": 0.00015,
+    "simplification_method": "per_taz_boundary"
+  }
+}

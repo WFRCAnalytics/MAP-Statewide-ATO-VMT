@@ -1,0 +1,93 @@
+#name: Deploy Statewide ATO VMT
+#
+#on:
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - '_site/**'
+#  workflow_dispatch:
+#
+#env:
+#  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+#
+#permissions:
+#  contents: read
+#  pages: write
+#  id-token: write
+#
+#concurrency:
+#  group: pages
+#  cancel-in-progress: false
+#
+#jobs:
+#  # Build for GitHub Pages and upload artifact
+#  build-pages:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - uses: actions/setup-node@v4
+#        with:
+#          node-version: '20'
+#          cache: 'npm'
+#          cache-dependency-path: _site/package-lock.json
+#
+#      - name: Install dependencies
+#        working-directory: _site
+#        run: npm ci
+#
+#      - name: Build for GitHub Pages
+#        working-directory: _site
+#        run: npm run build
+#        env:
+#          NODE_ENV: production
+#          VITE_BASE_URL: /MAP-Statewide-ATO-VMT/
+#
+#      - uses: actions/upload-pages-artifact@v3
+#        with:
+#          path: _site/dist
+#
+#  # Deploy GitHub Pages artifact (must be a separate job per Pages requirements)
+#  deploy-pages:
+#    needs: build-pages
+#    runs-on: ubuntu-latest
+#    environment:
+#      name: github-pages
+#      url: ${{ steps.deployment.outputs.page_url }}
+#    steps:
+#      - uses: actions/deploy-pages@v4
+#        id: deployment
+#
+#  # Build for FTP and upload — runs in parallel with build-pages
+#  deploy-ftp:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - uses: actions/setup-node@v4
+#        with:
+#          node-version: '20'
+#          cache: 'npm'
+#          cache-dependency-path: _site/package-lock.json
+#
+#      - name: Install dependencies
+#        working-directory: _site
+#        run: npm ci
+#
+#      - name: Build for FTP
+#        working-directory: _site
+#        run: npm run build
+#        env:
+#          NODE_ENV: production
+#          VITE_BASE_URL: /maps/statewide-ato-vmt/
+#
+#      - name: Deploy to FTP
+#        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+#        with:
+#          server: ${{ secrets.FTP_HOST }}
+#          username: ${{ secrets.FTP_USERNAME }}
+#          password: ${{ secrets.FTP_PASSWORD }}
+#          local-dir: _site/dist/
+#          server-dir: statewide-ato-vmt/
+#          dangerous-clean-slate: false
