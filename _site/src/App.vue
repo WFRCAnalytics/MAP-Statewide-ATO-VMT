@@ -118,16 +118,79 @@ import { findCartoVectorSource, getFirstLabelLayerId, initMap, setExtentBounds }
 
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`
 const DATASET_IDS = DATASETS.map((dataset) => dataset.value)
+const ACCESS_TARGET_IDS = ACCESS_TARGETS.map((target) => target.value)
+const TRAVEL_MODE_IDS = TRAVEL_MODES.map((mode) => mode.value)
+const VMT_PERIOD_IDS = VMT_PERIODS.map((period) => period.value)
+const DEFAULT_LAYER_VISIBLE = {
+  'metric-fill': true,
+  'taz-outline': true,
+  'major-roads': false,
+  'overview-map': true,
+}
 
-const datasetMode = ref('ato')
-const scenarioYear = ref(SCENARIO_YEARS[1])
-const modelArea = ref(MODEL_AREAS[0])
-const accessTarget = ref('Job')
-const travelMode = ref('Auto')
-const vmtPeriod = ref('DY_VMT')
-const fillOpacity = ref(0.78)
-const is3D = ref(false)
-const pinnedTooltip = ref(false)
+function parseBooleanParam(value, fallback = false) {
+  if (value == null) return fallback
+  if (['1', 'true', 'yes'].includes(value.toLowerCase())) return true
+  if (['0', 'false', 'no'].includes(value.toLowerCase())) return false
+  return fallback
+}
+
+function parseNumberParam(value, fallback = null) {
+  if (value == null) return fallback
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+function parseUrlState() {
+  const params = new URLSearchParams(window.location.search)
+  const dataset = params.get('dataset')
+  const year = parseNumberParam(params.get('year'))
+  const opacity = parseNumberParam(params.get('opacity'))
+  const zoom = parseNumberParam(params.get('zoom'))
+  const lng = parseNumberParam(params.get('lng'))
+  const lat = parseNumberParam(params.get('lat'))
+  const bearing = parseNumberParam(params.get('bearing'))
+  const pitch = parseNumberParam(params.get('pitch'))
+
+  return {
+    datasetMode: DATASET_IDS.includes(dataset) ? dataset : null,
+    scenarioYear: Number.isInteger(year) ? year : null,
+    modelArea: params.get('area'),
+    accessTarget: ACCESS_TARGET_IDS.includes(params.get('target')) ? params.get('target') : null,
+    travelMode: TRAVEL_MODE_IDS.includes(params.get('mode')) ? params.get('mode') : null,
+    vmtPeriod: VMT_PERIOD_IDS.includes(params.get('period')) ? params.get('period') : null,
+    fillOpacity: opacity != null ? Math.max(0, Math.min(1, opacity)) : null,
+    is3D: parseBooleanParam(params.get('threeD')),
+    pinnedTooltip: parseBooleanParam(params.get('pin')),
+    layerVisible: {
+      'metric-fill': parseBooleanParam(params.get('fill'), DEFAULT_LAYER_VISIBLE['metric-fill']),
+      'taz-outline': parseBooleanParam(params.get('outline'), DEFAULT_LAYER_VISIBLE['taz-outline']),
+      'major-roads': parseBooleanParam(params.get('roads'), DEFAULT_LAYER_VISIBLE['major-roads']),
+      'overview-map': parseBooleanParam(params.get('overview'), DEFAULT_LAYER_VISIBLE['overview-map']),
+    },
+    mapView: [lng, lat, zoom].every((value) => value != null)
+      ? {
+          center: [lng, lat],
+          zoom,
+          bearing: bearing ?? 0,
+          pitch: pitch ?? 0,
+        }
+      : null,
+  }
+}
+
+const initialUrlState = parseUrlState()
+const hasInitialMapView = Boolean(initialUrlState.mapView)
+
+const datasetMode = ref(initialUrlState.datasetMode ?? 'ato')
+const scenarioYear = ref(initialUrlState.scenarioYear ?? SCENARIO_YEARS[1])
+const modelArea = ref(initialUrlState.modelArea ?? MODEL_AREAS[0])
+const accessTarget = ref(initialUrlState.accessTarget ?? 'Job')
+const travelMode = ref(initialUrlState.travelMode ?? 'Auto')
+const vmtPeriod = ref(initialUrlState.vmtPeriod ?? 'DY_VMT')
+const fillOpacity = ref(initialUrlState.fillOpacity ?? 0.78)
+const is3D = ref(initialUrlState.is3D)
+const pinnedTooltip = ref(initialUrlState.pinnedTooltip)
 const showSplash = ref(true)
 const isLoading = ref(false)
 const loadingText = ref('Loading...')
@@ -145,10 +208,8 @@ const manifests = reactive({
 })
 
 const layerVisible = reactive({
-  'metric-fill': true,
-  'taz-outline': true,
-  'major-roads': false,
-  'overview-map': true,
+  ...DEFAULT_LAYER_VISIBLE,
+  ...initialUrlState.layerVisible,
 })
 
 const activeManifest = computed(() => manifests[datasetMode.value])
@@ -216,9 +277,72 @@ onMounted(() => {
   mapInstance.value.on('style.load', async () => {
     await loadManifestOptions()
     setupMapLayers()
-    refreshDataLayer({ fit: true })
+    refreshDataLayer({ fit: !hasInitialMapView })
+
+    if (hasInitialMapView) {
+      applyMapView(initialUrlState.mapView)
+    } else if (is3D.value) {
+      mapInstance.value?.setPitch(45)
+    }
+
+    bindMapUrlSync()
+    syncUrlState()
   })
 })
+
+function applyMapView(view) {
+  const map = mapInstance.value
+  if (!map || !view) return
+  map.jumpTo({
+    center: view.center,
+    zoom: view.zoom,
+    bearing: view.bearing ?? 0,
+    pitch: view.pitch ?? 0,
+  })
+}
+
+function bindMapUrlSync() {
+  const map = mapInstance.value
+  if (!map) return
+  map.on('moveend', syncUrlState)
+}
+
+function syncUrlState() {
+  const map = mapInstance.value
+  if (!map) return
+
+  const url = new URL(window.location.href)
+  const params = url.searchParams
+  const center = map.getCenter()
+
+  params.set('dataset', datasetMode.value)
+  params.set('year', String(scenarioYear.value))
+  params.set('area', modelArea.value)
+  params.set('opacity', fillOpacity.value.toFixed(2))
+  params.set('threeD', String(is3D.value))
+  params.set('pin', String(pinnedTooltip.value))
+  params.set('fill', String(layerVisible['metric-fill']))
+  params.set('outline', String(layerVisible['taz-outline']))
+  params.set('roads', String(layerVisible['major-roads']))
+  params.set('overview', String(layerVisible['overview-map']))
+  params.set('lng', center.lng.toFixed(5))
+  params.set('lat', center.lat.toFixed(5))
+  params.set('zoom', map.getZoom().toFixed(2))
+  params.set('bearing', map.getBearing().toFixed(2))
+  params.set('pitch', map.getPitch().toFixed(2))
+
+  if (datasetMode.value === 'ato') {
+    params.set('target', accessTarget.value)
+    params.set('mode', travelMode.value)
+    params.delete('period')
+  } else {
+    params.set('period', vmtPeriod.value)
+    params.delete('target')
+    params.delete('mode')
+  }
+
+  window.history.replaceState({}, '', `${url.pathname}?${params.toString()}${url.hash}`)
+}
 
 function setupMapLayers() {
   const map = mapInstance.value
@@ -591,6 +715,7 @@ function onToggleLayer(id) {
     map.setLayoutProperty('roads-major', 'visibility', layerVisible[id] ? 'visible' : 'none')
   }
 
+  syncUrlState()
 }
 
 function on3DChange(value) {
@@ -599,11 +724,13 @@ function on3DChange(value) {
   if (!map) return
   refreshStyleExpressions()
   map.easeTo({ pitch: value ? 45 : 0, duration: 500 })
+  syncUrlState()
 }
 
 function onOpacityChange(value) {
   fillOpacity.value = value
   refreshStyleExpressions()
+  syncUrlState()
 }
 
 function onDatasetModeChange(value) {
@@ -682,15 +809,22 @@ watch(datasetMode, () => {
   activeTazProperties.value = null
   ensureAvailableMetricSelection()
   refreshDataLayer({ fit: false })
+  syncUrlState()
 })
 watch(scenarioYear, () => {
   ensureAvailableMetricSelection()
   refreshDataLayer({ fit: false })
+  syncUrlState()
 })
-watch(activeColumn, () => refreshDataLayer({ fit: false }))
+watch(activeColumn, () => {
+  refreshDataLayer({ fit: false })
+  syncUrlState()
+})
 watch(modelArea, () => {
   activeTazProperties.value = null
   ensureAvailableMetricSelection()
   refreshDataLayer({ fit: true })
+  syncUrlState()
 })
+watch(pinnedTooltip, () => syncUrlState())
 </script>

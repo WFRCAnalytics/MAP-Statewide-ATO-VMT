@@ -110,7 +110,6 @@ export function initMap(containerId) {
     }),
     'top-left',
   )
-  mapInstance.addControl(new maplibregl.GeolocateControl({ trackUserLocation: false }), 'top-left')
   mapInstance.addControl(new maplibregl.NavigationControl(), 'top-left')
   mapInstance.addControl(new TiltResetControl(), 'top-left')
   mapInstance.addControl(new ZoomToExtentControl(), 'top-left')
