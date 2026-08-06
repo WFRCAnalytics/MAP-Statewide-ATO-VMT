@@ -6,6 +6,7 @@ import { MAP_CENTER, MAP_ZOOM } from '../config/constants.js'
 let mapInstance = null
 let currentBounds = null
 let pmtilesProtocol = null
+let interactionModeControl = null
 
 export function registerPMTilesProtocol() {
   if (pmtilesProtocol) return pmtilesProtocol
@@ -70,6 +71,52 @@ class ZoomToExtentControl {
   }
 }
 
+class InteractionModeControl {
+  constructor(initialMode = 'pan', onChange = null) {
+    this.mode = initialMode
+    this.onChange = onChange
+    this.buttons = {}
+  }
+
+  onAdd(map) {
+    this.map = map
+    this.container = document.createElement('div')
+    this.container.className = 'maplibregl-ctrl maplibregl-ctrl-group interaction-mode-control'
+
+    this.buttons.pan = this.createButton('pan', 'Pan', 'fa-hand')
+    this.buttons.rotate = this.createButton('rotate', 'Rotate', 'fa-compass')
+    this.container.appendChild(this.buttons.pan)
+    this.container.appendChild(this.buttons.rotate)
+    this.setMode(this.mode)
+    return this.container
+  }
+
+  createButton(mode, label, iconClass) {
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.title = label
+    button.setAttribute('aria-label', label)
+    button.innerHTML = `<i class="fa-solid ${iconClass}"></i>`
+    button.onclick = () => {
+      this.setMode(mode)
+      this.onChange?.(mode)
+    }
+    return button
+  }
+
+  setMode(mode) {
+    this.mode = mode
+    Object.entries(this.buttons).forEach(([key, button]) => {
+      button.classList.toggle('active', key === mode)
+    })
+  }
+
+  onRemove() {
+    this.container.parentNode?.removeChild(this.container)
+    this.map = null
+  }
+}
+
 class TiltResetControl {
   onAdd(map) {
     this.map = map
@@ -90,7 +137,7 @@ class TiltResetControl {
   }
 }
 
-export function initMap(containerId) {
+export function initMap(containerId, options = {}) {
   registerPMTilesProtocol()
 
   mapInstance = new maplibregl.Map({
@@ -98,6 +145,7 @@ export function initMap(containerId) {
     style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
     center: MAP_CENTER,
     zoom: MAP_ZOOM,
+    maxPitch: 85,
     preserveDrawingBuffer: true,
   })
 
@@ -112,6 +160,11 @@ export function initMap(containerId) {
   )
   mapInstance.addControl(new maplibregl.NavigationControl(), 'top-left')
   mapInstance.addControl(new TiltResetControl(), 'top-left')
+  interactionModeControl = new InteractionModeControl(
+    options.interactionMode ?? 'pan',
+    options.onInteractionModeChange ?? null,
+  )
+  mapInstance.addControl(interactionModeControl, 'top-left')
   mapInstance.addControl(new ZoomToExtentControl(), 'top-left')
   mapInstance.addControl(new maplibregl.ScaleControl({ unit: 'imperial' }), 'bottom-left')
 
@@ -120,6 +173,10 @@ export function initMap(containerId) {
 
 export function getMap() {
   return mapInstance
+}
+
+export function setInteractionModeControl(mode) {
+  interactionModeControl?.setMode(mode)
 }
 
 export function getFirstLabelLayerId(map) {

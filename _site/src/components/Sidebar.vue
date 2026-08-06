@@ -48,7 +48,7 @@
       </div>
 
       <span v-if="datasetMode === 'ato'" class="step-header">Step 4: Choose Travel Mode</span>
-      <div v-if="datasetMode === 'ato'" class="mode-grid">
+      <div v-if="datasetMode === 'ato'" class="mode-grid travel-mode-row">
         <button
           v-for="mode in TRAVEL_MODES"
           :key="mode.value"

@@ -34,12 +34,14 @@
     <main id="map-area" :class="{ 'overview-visible': layerVisible['overview-map'] }">
       <MapControls
         :active-column="activeMetricLabel"
+        :exaggeration="extrusionExaggeration"
         :has-data="hasData"
         :is3-d="is3D"
         :opacity="fillOpacity"
         :pinned-tooltip="pinnedTooltip"
         @download="onDownload"
         @screenshot="onScreenshot"
+        @update:exaggeration="onExaggerationChange"
         @update:is3D="on3DChange"
         @update:opacity="onOpacityChange"
         @update:pinnedTooltip="pinnedTooltip = $event"
@@ -87,7 +89,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import MapControls from './components/MapControls.vue'
 import LayerControl from './components/LayerControl.vue'
@@ -114,13 +116,21 @@ import {
   loadDataManifest,
   loadDataRows,
 } from './composables/useAtoData.js'
-import { findCartoVectorSource, getFirstLabelLayerId, initMap, setExtentBounds } from './composables/useMap.js'
+import {
+  findCartoVectorSource,
+  getFirstLabelLayerId,
+  initMap,
+  setExtentBounds,
+  setInteractionModeControl,
+} from './composables/useMap.js'
 
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`
 const DATASET_IDS = DATASETS.map((dataset) => dataset.value)
 const ACCESS_TARGET_IDS = ACCESS_TARGETS.map((target) => target.value)
 const TRAVEL_MODE_IDS = TRAVEL_MODES.map((mode) => mode.value)
 const VMT_PERIOD_IDS = VMT_PERIODS.map((period) => period.value)
+const INTERACTION_MODES = ['pan', 'rotate']
+const MAX_TILT = 85
 const DEFAULT_LAYER_VISIBLE = {
   'metric-fill': true,
   'taz-outline': true,
@@ -151,6 +161,8 @@ function parseUrlState() {
   const lat = parseNumberParam(params.get('lat'))
   const bearing = parseNumberParam(params.get('bearing'))
   const pitch = parseNumberParam(params.get('pitch'))
+  const exaggeration = parseNumberParam(params.get('exaggeration'))
+  const interaction = params.get('interaction')
 
   return {
     datasetMode: DATASET_IDS.includes(dataset) ? dataset : null,
@@ -160,6 +172,8 @@ function parseUrlState() {
     travelMode: TRAVEL_MODE_IDS.includes(params.get('mode')) ? params.get('mode') : null,
     vmtPeriod: VMT_PERIOD_IDS.includes(params.get('period')) ? params.get('period') : null,
     fillOpacity: opacity != null ? Math.max(0, Math.min(1, opacity)) : null,
+    exaggeration: exaggeration != null ? Math.max(0.5, Math.min(8, exaggeration)) : null,
+    interactionMode: INTERACTION_MODES.includes(interaction) ? interaction : 'pan',
     is3D: parseBooleanParam(params.get('threeD')),
     pinnedTooltip: parseBooleanParam(params.get('pin')),
     layerVisible: {
@@ -188,8 +202,11 @@ const modelArea = ref(initialUrlState.modelArea ?? MODEL_AREAS[0])
 const accessTarget = ref(initialUrlState.accessTarget ?? 'Job')
 const travelMode = ref(initialUrlState.travelMode ?? 'Auto')
 const vmtPeriod = ref(initialUrlState.vmtPeriod ?? 'DY_VMT')
+const interactionMode = ref(initialUrlState.interactionMode ?? 'pan')
 const fillOpacity = ref(initialUrlState.fillOpacity ?? 0.78)
+const extrusionExaggeration = ref(initialUrlState.exaggeration ?? 1.5)
 const is3D = ref(initialUrlState.is3D)
+const mapPitch = ref(initialUrlState.mapView?.pitch ?? (initialUrlState.is3D ? 45 : 0))
 const pinnedTooltip = ref(initialUrlState.pinnedTooltip)
 const showSplash = ref(true)
 const isLoading = ref(false)
@@ -206,6 +223,7 @@ const manifests = reactive({
   ato: null,
   vmt: null,
 })
+let disposeMouseModeBindings = null
 
 const layerVisible = reactive({
   ...DEFAULT_LAYER_VISIBLE,
@@ -273,7 +291,10 @@ const disabledVmtPeriods = computed(() => (
 ))
 
 onMounted(() => {
-  mapInstance.value = initMap('map')
+  mapInstance.value = initMap('map', {
+    interactionMode: interactionMode.value,
+    onInteractionModeChange: onInteractionModeChange,
+  })
   mapInstance.value.on('style.load', async () => {
     await loadManifestOptions()
     setupMapLayers()
@@ -282,12 +303,19 @@ onMounted(() => {
     if (hasInitialMapView) {
       applyMapView(initialUrlState.mapView)
     } else if (is3D.value) {
-      mapInstance.value?.setPitch(45)
+      mapInstance.value?.setPitch(mapPitch.value || 45)
     }
 
+    syncMapUiStateFromMap()
+    refreshStyleExpressions()
+    applyInteractionMode()
     bindMapUrlSync()
     syncUrlState()
   })
+})
+
+onBeforeUnmount(() => {
+  disposeMouseModeBindings?.()
 })
 
 function applyMapView(view) {
@@ -304,7 +332,19 @@ function applyMapView(view) {
 function bindMapUrlSync() {
   const map = mapInstance.value
   if (!map) return
-  map.on('moveend', syncUrlState)
+  map.on('moveend', () => {
+    syncMapUiStateFromMap()
+    refreshStyleExpressions()
+    syncUrlState()
+  })
+}
+
+function syncMapUiStateFromMap() {
+  const map = mapInstance.value
+  if (!map) return
+
+  mapPitch.value = Math.max(0, Math.min(MAX_TILT, map.getPitch()))
+  is3D.value = mapPitch.value > 0.5
 }
 
 function syncUrlState() {
@@ -319,6 +359,8 @@ function syncUrlState() {
   params.set('year', String(scenarioYear.value))
   params.set('area', modelArea.value)
   params.set('opacity', fillOpacity.value.toFixed(2))
+  params.set('exaggeration', extrusionExaggeration.value.toFixed(2))
+  params.set('interaction', interactionMode.value)
   params.set('threeD', String(is3D.value))
   params.set('pin', String(pinnedTooltip.value))
   params.set('fill', String(layerVisible['metric-fill']))
@@ -342,6 +384,92 @@ function syncUrlState() {
   }
 
   window.history.replaceState({}, '', `${url.pathname}?${params.toString()}${url.hash}`)
+}
+
+function getOppositeInteractionMode(mode) {
+  return mode === 'rotate' ? 'pan' : 'rotate'
+}
+
+function applyInteractionMode() {
+  disposeMouseModeBindings?.()
+  const map = mapInstance.value
+  if (!map) return
+
+  map.dragPan.disable()
+  map.dragRotate.disable()
+
+  const container = map.getCanvasContainer()
+  let dragState = null
+
+  const clampPitch = (value) => Math.max(0, Math.min(MAX_TILT, value))
+
+  const stopDrag = () => {
+    dragState = null
+    container.style.cursor = interactionMode.value === 'rotate' ? 'crosshair' : 'grab'
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+  }
+
+  const onMouseMove = (event) => {
+    if (!dragState) return
+
+    const dx = event.clientX - dragState.lastX
+    const dy = event.clientY - dragState.lastY
+    dragState.lastX = event.clientX
+    dragState.lastY = event.clientY
+
+    if (dragState.mode === 'pan') {
+      map.panBy([-dx, -dy], { animate: false })
+      return
+    }
+
+    const nextBearing = map.getBearing() + (dx * 0.45)
+    const nextPitch = clampPitch(map.getPitch() - (dy * 0.35))
+    map.jumpTo({ bearing: nextBearing, pitch: nextPitch })
+    mapPitch.value = nextPitch
+    is3D.value = nextPitch > 0.5
+  }
+
+  const onMouseUp = () => {
+    stopDrag()
+    syncMapUiStateFromMap()
+    syncUrlState()
+  }
+
+  const onMouseDown = (event) => {
+    if (event.button !== 0 && event.button !== 2) return
+
+    const dragMode = event.button === 0
+      ? interactionMode.value
+      : getOppositeInteractionMode(interactionMode.value)
+
+    event.preventDefault()
+    map.stop()
+    dragState = {
+      button: event.button,
+      lastX: event.clientX,
+      lastY: event.clientY,
+      mode: dragMode,
+    }
+    container.style.cursor = dragMode === 'rotate' ? 'grabbing' : 'grabbing'
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }
+
+  const onContextMenu = (event) => {
+    event.preventDefault()
+  }
+
+  container.style.cursor = interactionMode.value === 'rotate' ? 'crosshair' : 'grab'
+  container.addEventListener('mousedown', onMouseDown)
+  container.addEventListener('contextmenu', onContextMenu)
+
+  disposeMouseModeBindings = () => {
+    stopDrag()
+    container.style.cursor = ''
+    container.removeEventListener('mousedown', onMouseDown)
+    container.removeEventListener('contextmenu', onContextMenu)
+  }
 }
 
 function setupMapLayers() {
@@ -573,7 +701,7 @@ function buildExtrusionExpression() {
     ['linear'],
     ['to-number', ['coalesce', ['get', normalizedColumn], 0]],
     0, 0,
-    1, 4500,
+    1, 4500 * extrusionExaggeration.value,
   ]
 }
 
@@ -723,13 +851,29 @@ function on3DChange(value) {
   const map = mapInstance.value
   if (!map) return
   refreshStyleExpressions()
-  map.easeTo({ pitch: value ? 45 : 0, duration: 500 })
+  const nextPitch = value ? Math.max(mapPitch.value, 55) : 0
+  mapPitch.value = nextPitch
+  map.easeTo({ pitch: nextPitch, duration: 500 })
   syncUrlState()
 }
 
 function onOpacityChange(value) {
   fillOpacity.value = value
   refreshStyleExpressions()
+  syncUrlState()
+}
+
+function onExaggerationChange(value) {
+  extrusionExaggeration.value = Math.max(0.5, Math.min(8, value))
+  refreshStyleExpressions()
+  syncUrlState()
+}
+
+function onInteractionModeChange(value) {
+  if (!INTERACTION_MODES.includes(value)) return
+  interactionMode.value = value
+  setInteractionModeControl(value)
+  applyInteractionMode()
   syncUrlState()
 }
 

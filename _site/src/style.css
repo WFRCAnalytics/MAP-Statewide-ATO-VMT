@@ -138,6 +138,10 @@ h1, h2, h3, h4, h5 {
   margin-bottom: 12px;
 }
 
+.travel-mode-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .sidebar-hr { border: none; border-top: 1px solid #dee2e6; margin: 10px 0; }
 
 .accordion { margin-bottom: 8px; }
@@ -380,7 +384,16 @@ h1, h2, h3, h4, h5 {
   text-transform: uppercase;
 }
 .ctrl-group { display: flex; align-items: center; gap: 6px; }
-#opacity { width: 88px; accent-color: #233A57; }
+#opacity,
+#exaggeration { width: 88px; accent-color: #233A57; }
+.ctrl-value {
+  min-width: 44px;
+  text-align: right;
+  color: #5b6b79;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: 'Open Sans', Arial, sans-serif;
+}
 .switch-wrap {
   display: flex;
   align-items: center;
@@ -715,6 +728,14 @@ h1, h2, h3, h4, h5 {
 .btn-get-started:hover { background: #e8572d; }
 
 .maplibregl-ctrl-group { border-radius: 8px !important; }
+.interaction-mode-control button {
+  min-width: 30px;
+  color: #233A57;
+}
+.interaction-mode-control button.active {
+  background: #233A57;
+  color: #fff;
+}
 .maplibregl-popup-content { padding: 0 !important; border-radius: 4px; overflow: hidden; }
 
 @media (max-width: 820px) {
