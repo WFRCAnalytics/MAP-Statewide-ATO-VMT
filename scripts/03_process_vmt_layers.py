@@ -1,17 +1,21 @@
 """3 - Process VMT Layers
 
-Converts the model `assigned_net.dbf` files into canonical web-ready
-Vehicle Miles Traveled artifacts in `data/processed/vmt/`.
+Converts the TAZ-based produced/attracted VMT CSV files into canonical
+web-ready Vehicle Miles Traveled artifacts in `data/processed/vmt/`.
 
 This processor:
-  - reads each model area's `assigned_net.dbf` for each available scenario
-    year
-  - sums AM_VMT, MD_VMT, PM_VMT, EV_VMT, and DY_VMT to the CO_TAZID level
-  - normalizes each VMT period within ScenarioYear and ModelArea
+  - reads Statewide `TAZ-Based-VMT.csv` and Wasatch Front
+    `TAZ-Based Metrics.csv` for each available scenario year
+  - filters to Metric = VMT
+  - summarizes produced and attracted VMT by TAZ, period, and purpose
+  - adds Daily and All Purposes rollups
+  - normalizes each VMT metric within ScenarioYear and ModelArea
   - builds simplified PMTiles polygons for the thematic fill layer
   - builds separate boundary PMTiles for readable TAZ outlines
   - writes a manifest with model-area bounds, record counts, metric ranges,
     and file paths used by the web app
+  - reuses existing parquet/PMTiles artifacts when source inputs and build
+    settings have not changed
 
 Run with:
     uv run scripts/03_process_vmt_layers.py
@@ -22,6 +26,7 @@ step 4 afterward to publish both ATO and VMT together).
 
     uv run scripts/03_process_vmt_layers.py --publish
     uv run scripts/03_process_vmt_layers.py --publish-only
+    uv run scripts/03_process_vmt_layers.py --publish --force
 """
 
 from __future__ import annotations
@@ -38,14 +43,24 @@ from pipeline import vmt
 
 
 def print_processed_summary(summary: dict) -> None:
-    print(f"Wrote {summary['metric_rows']:,} VMT metric rows")
-    print(f"Wrote {summary['tile_features']:,} simplified PMTiles features")
-    print(f"Wrote {summary['boundary_features']:,} boundary PMTiles features")
+    print(
+        f"{summary['metrics_status'].title()} {summary['metric_rows']:,} "
+        "VMT metric rows"
+    )
+    print(f"Wrote {summary['metric_columns']:,} VMT metric columns")
+    print(
+        f"{summary['tiles_status'].title()} {summary['tile_features']:,} "
+        "simplified PMTiles features"
+    )
+    print(
+        f"{summary['tiles_status'].title()} {summary['boundary_features']:,} "
+        "boundary PMTiles features"
+    )
     print(f"Processed output: {summary['processed_dir']}")
 
 
 def print_publish_summary(summary: dict) -> None:
-    print(f"Web output: {summary['webdata_dir']}")
+    print(f"Web output: {summary['web_data_dir']}")
 
 
 def main() -> None:
@@ -62,13 +77,18 @@ def main() -> None:
         action="store_true",
         help="Copy existing processed outputs into _site/public/data/vmt without rebuilding them.",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Rebuild VMT parquet and PMTiles even when cached artifacts are current.",
+    )
     args = parser.parse_args()
 
     if args.publish_only:
         print_publish_summary(vmt.publish_web_assets())
         return
 
-    print_processed_summary(vmt.build_processed_assets())
+    print_processed_summary(vmt.build_processed_assets(force=args.force))
 
     if args.publish:
         print_publish_summary(vmt.publish_web_assets())

@@ -8,10 +8,10 @@ Expected raw inputs live under `data/raw/`:
   - Statewide TAZ polygons in `data/raw/statewide TAZ/`
   - ATO CSVs in `data/raw/0 - USTM/`, `1 - WF/`, `2 - CA/`, `3 - DX/`,
     `4 - WB/`, and `5 - IR/`
-  - VMT `assigned_net.dbf` files in the same model-area folders/years
+  - VMT TAZ-based CSVs for Statewide and Wasatch Front model folders/years
 
 Run with:
-    uv run scripts/01_preparedata_layers.py
+    uv run scripts/01_prepare_data_layers.py
 
 If this fails, place the missing files at the paths shown in the error and
 rerun this script before continuing to step 2.

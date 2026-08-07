@@ -25,7 +25,14 @@
     <div id="sidebar-body">
       <span class="step-header">Step 2: Select Model Area</span>
       <select class="lu-select" :value="modelArea" @change="$emit('update:modelArea', $event.target.value)">
-        <option v-for="area in modelAreas" :key="area" :value="area">{{ area }}</option>
+        <option
+          v-for="area in modelAreas"
+          :key="area"
+          :value="area"
+          :disabled="disabledModelAreas[area]"
+        >
+          {{ area }}
+        </option>
       </select>
 
       <span v-if="datasetMode === 'ato'" class="step-header">Step 3: Choose Accessibility</span>
@@ -66,24 +73,51 @@
         </button>
       </div>
 
-      <span v-if="datasetMode === 'vmt'" class="step-header">Step 3: Choose VMT Period</span>
-      <div v-if="datasetMode === 'vmt'" class="mode-grid">
+      <span v-if="datasetMode === 'vmt'" class="step-header">Step 3: Choose VMT Direction</span>
+      <div v-if="datasetMode === 'vmt'" class="segmented-control">
         <button
-          v-for="period in VMT_PERIODS"
-          :key="period.value"
-          class="mode-button"
-          :class="{
-            active: vmtPeriod === period.value && !disabledVmtPeriods[period.value],
-            disabled: disabledVmtPeriods[period.value],
-          }"
-          :disabled="disabledVmtPeriods[period.value]"
-          :title="disabledVmtPeriods[period.value] ? 'No data for this selection' : period.label"
-          @click="$emit('update:vmtPeriod', period.value)"
+          v-for="pa in VMT_PA_OPTIONS"
+          :key="pa.value"
+          class="segmented-button"
+          :class="{ active: vmtPa === pa.value }"
+          :title="pa.label"
+          @click="$emit('update:vmtPa', pa.value)"
         >
-          <i :class="`fa-solid ${period.icon}`"></i>
-          <span>{{ period.label }}</span>
+          <i :class="`fa-solid ${pa.icon}`"></i>
+          <span>{{ pa.label }}</span>
         </button>
       </div>
+
+      <span v-if="datasetMode === 'vmt'" class="step-header">Step 4: Choose Purpose</span>
+      <select
+        v-if="datasetMode === 'vmt'"
+        class="lu-select"
+        :value="vmtPurposeGroup"
+        @change="$emit('update:vmtPurposeGroup', $event.target.value)"
+      >
+        <option
+          v-for="group in vmtPurposeGroups"
+          :key="group.value"
+          :value="group.value"
+        >
+          {{ group.label }}
+        </option>
+      </select>
+      <select
+        v-if="datasetMode === 'vmt'"
+        class="lu-select"
+        :value="vmtPurpose"
+        @change="$emit('update:vmtPurpose', $event.target.value)"
+      >
+        <option
+          v-for="purpose in vmtPurposes"
+          :key="purpose.value"
+          :value="purpose.value"
+          :disabled="disabledVmtPurposes[purpose.value]"
+        >
+          {{ purpose.label }}
+        </option>
+      </select>
 
       <TrendChart
         :properties="activeTazProperties"
@@ -116,7 +150,9 @@ import {
   MODEL_AREAS,
   SCENARIO_YEARS,
   TRAVEL_MODES,
-  VMT_PERIODS,
+  VMT_PA_OPTIONS,
+  VMT_PURPOSE_GROUPS,
+  VMT_PURPOSES,
 } from '../config/constants.js'
 
 defineProps({
@@ -125,12 +161,17 @@ defineProps({
   modelAreas: { type: Array, default: () => MODEL_AREAS },
   scenarioYear: { type: Number, required: true },
   modelArea: { type: String, required: true },
+  disabledModelAreas: { type: Object, default: () => ({}) },
   accessTarget: { type: String, required: true },
   travelMode: { type: String, required: true },
-  vmtPeriod: { type: String, default: 'DY_VMT' },
+  vmtPa: { type: String, default: 'P' },
+  vmtPurposeGroup: { type: String, default: 'PERSON' },
+  vmtPurpose: { type: String, default: 'PERSON_ALL' },
+  vmtPurposeGroups: { type: Array, default: () => VMT_PURPOSE_GROUPS },
+  vmtPurposes: { type: Array, default: () => VMT_PURPOSES },
   disabledAccessTargets: { type: Object, default: () => ({}) },
   disabledTravelModes: { type: Object, default: () => ({}) },
-  disabledVmtPeriods: { type: Object, default: () => ({}) },
+  disabledVmtPurposes: { type: Object, default: () => ({}) },
   recordCount: { type: Number, default: 0 },
   activeTazProperties: { type: Object, default: null },
   datasetLabel: { type: String, default: 'ATO' },
@@ -145,6 +186,8 @@ defineEmits([
   'update:modelArea',
   'update:accessTarget',
   'update:travelMode',
-  'update:vmtPeriod',
+  'update:vmtPa',
+  'update:vmtPurposeGroup',
+  'update:vmtPurpose',
 ])
 </script>

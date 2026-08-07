@@ -11,12 +11,17 @@
       :model-areas="modelAreas"
       :scenario-year="scenarioYear"
       :model-area="modelArea"
+      :disabled-model-areas="disabledModelAreas"
       :access-target="accessTarget"
       :travel-mode="travelMode"
-      :vmt-period="vmtPeriod"
+      :vmt-pa="vmtPa"
+      :vmt-purpose-group="vmtPurposeGroup"
+      :vmt-purpose="vmtPurpose"
+      :vmt-purpose-groups="vmtPurposeGroups"
+      :vmt-purposes="vmtPurposes"
       :disabled-access-targets="disabledAccessTargets"
       :disabled-travel-modes="disabledTravelModes"
-      :disabled-vmt-periods="disabledVmtPeriods"
+      :disabled-vmt-purposes="disabledVmtPurposes"
       :record-count="recordCount"
       :active-taz-properties="activeTazProperties"
       :dataset-label="activeDatasetLabel"
@@ -28,7 +33,9 @@
       @update:modelArea="modelArea = $event"
       @update:accessTarget="onAccessTargetChange"
       @update:travelMode="onTravelModeChange"
-      @update:vmtPeriod="onVmtPeriodChange"
+      @update:vmtPa="onVmtPaChange"
+      @update:vmtPurposeGroup="onVmtPurposeGroupChange"
+      @update:vmtPurpose="onVmtPurposeChange"
     />
 
     <main id="map-area" :class="{ 'overview-visible': layerVisible['overview-map'] }">
@@ -56,6 +63,7 @@
         :scenario-year="scenarioYear"
         :active-column="activeColumn"
         :metric-label="activeMetricLabel"
+        :metric-rows-by-taz="activeMetricRowsByTaz"
         @feature-hover="activeTazProperties = $event"
       />
       <Legend
@@ -106,7 +114,9 @@ import {
   SCENARIO_YEARS,
   TRAVEL_MODES,
   VMT_PALETTE,
-  VMT_PERIODS,
+  VMT_PA_OPTIONS,
+  VMT_PURPOSE_GROUPS,
+  VMT_PURPOSES,
 } from './config/constants.js'
 import {
   getMetricAvailabilityProperty,
@@ -128,7 +138,9 @@ const logoUrl = `${import.meta.env.BASE_URL}logo.png`
 const DATASET_IDS = DATASETS.map((dataset) => dataset.value)
 const ACCESS_TARGET_IDS = ACCESS_TARGETS.map((target) => target.value)
 const TRAVEL_MODE_IDS = TRAVEL_MODES.map((mode) => mode.value)
-const VMT_PERIOD_IDS = VMT_PERIODS.map((period) => period.value)
+const VMT_PA_IDS = VMT_PA_OPTIONS.map((option) => option.value)
+const VMT_PURPOSE_GROUP_IDS = VMT_PURPOSE_GROUPS.map((group) => group.value)
+const VMT_DAILY_PERIOD = 'DY'
 const INTERACTION_MODES = ['pan', 'rotate']
 const MAX_TILT = 85
 const DEFAULT_LAYER_VISIBLE = {
@@ -170,7 +182,9 @@ function parseUrlState() {
     modelArea: params.get('area'),
     accessTarget: ACCESS_TARGET_IDS.includes(params.get('target')) ? params.get('target') : null,
     travelMode: TRAVEL_MODE_IDS.includes(params.get('mode')) ? params.get('mode') : null,
-    vmtPeriod: VMT_PERIOD_IDS.includes(params.get('period')) ? params.get('period') : null,
+    vmtPa: VMT_PA_IDS.includes(params.get('pa')) ? params.get('pa') : null,
+    vmtPurposeGroup: VMT_PURPOSE_GROUP_IDS.includes(params.get('purposeGroup')) ? params.get('purposeGroup') : null,
+    vmtPurpose: params.get('purpose'),
     fillOpacity: opacity != null ? Math.max(0, Math.min(1, opacity)) : null,
     exaggeration: exaggeration != null ? Math.max(0.5, Math.min(8, exaggeration)) : null,
     interactionMode: INTERACTION_MODES.includes(interaction) ? interaction : 'pan',
@@ -201,7 +215,9 @@ const scenarioYear = ref(initialUrlState.scenarioYear ?? SCENARIO_YEARS[1])
 const modelArea = ref(initialUrlState.modelArea ?? MODEL_AREAS[0])
 const accessTarget = ref(initialUrlState.accessTarget ?? 'Job')
 const travelMode = ref(initialUrlState.travelMode ?? 'Auto')
-const vmtPeriod = ref(initialUrlState.vmtPeriod ?? 'DY_VMT')
+const vmtPa = ref(initialUrlState.vmtPa ?? 'P')
+const vmtPurposeGroup = ref(initialUrlState.vmtPurposeGroup ?? 'PERSON')
+const vmtPurpose = ref(initialUrlState.vmtPurpose ?? 'PERSON_ALL')
 const interactionMode = ref(initialUrlState.interactionMode ?? 'pan')
 const fillOpacity = ref(initialUrlState.fillOpacity ?? 0.78)
 const extrusionExaggeration = ref(initialUrlState.exaggeration ?? 1.5)
@@ -219,11 +235,13 @@ const minValue = ref(0)
 const maxValue = ref(0)
 const selectedRows = ref([])
 const activeTazProperties = ref(null)
+const activeMetricRowsByTaz = ref(new Map())
 const manifests = reactive({
   ato: null,
   vmt: null,
 })
 let disposeMouseModeBindings = null
+let vmtRowsRequestId = 0
 
 const layerVisible = reactive({
   ...DEFAULT_LAYER_VISIBLE,
@@ -236,16 +254,29 @@ const activeDataset = computed(() => (
 ))
 const activeDatasetLabel = computed(() => activeDataset.value.label)
 const scenarioYears = computed(() => activeManifest.value?.scenario_years ?? SCENARIO_YEARS)
-const modelAreas = computed(() => activeManifest.value?.model_areas ?? MODEL_AREAS)
+const modelAreas = computed(() => MODEL_AREAS)
+const supportedModelAreas = computed(() => activeManifest.value?.model_areas ?? MODEL_AREAS)
+const vmtPurposeGroups = computed(() => (
+  activeManifest.value?.metric_dimensions?.purpose_groups ?? VMT_PURPOSE_GROUPS
+))
+const allVmtPurposes = computed(() => activeManifest.value?.metric_dimensions?.purposes ?? VMT_PURPOSES)
+const vmtPurposes = computed(() => (
+  allVmtPurposes.value.filter((purpose) => purpose.group === vmtPurposeGroup.value)
+))
 const activeColumn = computed(() => (
   datasetMode.value === 'ato'
     ? `${accessTarget.value}_by${travelMode.value}`
-    : vmtPeriod.value
+    : `${vmtPa.value}_${VMT_DAILY_PERIOD}_${vmtPurpose.value}`
 ))
 const activeMetricLabel = computed(() => {
   if (datasetMode.value === 'vmt') {
-    const period = VMT_PERIODS.find((item) => item.value === vmtPeriod.value)
-    return period ? `${period.label} VMT` : vmtPeriod.value
+    const pa = VMT_PA_OPTIONS.find((item) => item.value === vmtPa.value)
+    const purposeGroup = vmtPurposeGroups.value.find((item) => item.value === vmtPurposeGroup.value)
+    const purpose = vmtPurposes.value.find((item) => item.value === vmtPurpose.value)
+    const purposeLabel = purpose?.is_group_total
+      ? purposeGroup?.label
+      : purpose?.label ?? vmtPurpose.value
+    return `${pa?.label ?? vmtPa.value} ${purposeLabel} VMT`
   }
 
   const target = ACCESS_TARGETS.find((item) => item.value === accessTarget.value)
@@ -265,6 +296,14 @@ const activeModelScenarioYears = computed(() => {
   const years = activeManifest.value?.scenario_years_by_model_area?.[modelArea.value] ?? scenarioYears.value
   return [...new Set((years ?? []).map(Number).filter(Number.isFinite))].sort((a, b) => a - b)
 })
+const disabledModelAreas = computed(() => (
+  Object.fromEntries(
+    MODEL_AREAS.map((area) => [
+      area,
+      datasetMode.value === 'vmt' && !supportedModelAreas.value.includes(area),
+    ]),
+  )
+))
 const disabledAccessTargets = computed(() => (
   Object.fromEntries(
     ACCESS_TARGETS.map((target) => [
@@ -281,11 +320,11 @@ const disabledTravelModes = computed(() => (
     ]),
   )
 ))
-const disabledVmtPeriods = computed(() => (
+const disabledVmtPurposes = computed(() => (
   Object.fromEntries(
-    VMT_PERIODS.map((period) => [
-      period.value,
-      !metricHasData(period.value, 'vmt'),
+    vmtPurposes.value.map((purpose) => [
+      purpose.value,
+      !metricHasData(vmtMetricColumn(vmtPa.value, VMT_DAILY_PERIOD, purpose.value), 'vmt'),
     ]),
   )
 ))
@@ -376,9 +415,15 @@ function syncUrlState() {
   if (datasetMode.value === 'ato') {
     params.set('target', accessTarget.value)
     params.set('mode', travelMode.value)
+    params.delete('pa')
     params.delete('period')
+    params.delete('purposeGroup')
+    params.delete('purpose')
   } else {
-    params.set('period', vmtPeriod.value)
+    params.set('pa', vmtPa.value)
+    params.delete('period')
+    params.set('purposeGroup', vmtPurposeGroup.value)
+    params.set('purpose', vmtPurpose.value)
     params.delete('target')
     params.delete('mode')
   }
@@ -585,6 +630,10 @@ function metricColumnFor(target, mode) {
   return `${target}_by${mode}`
 }
 
+function vmtMetricColumn(pa, period, purpose) {
+  return `${pa}_${period}_${purpose}`
+}
+
 function metricHasData(metricColumn, datasetId = datasetMode.value) {
   const manifest = manifests[datasetId]
   if (!manifest) return true
@@ -613,10 +662,34 @@ function ensureAvailableMetricSelection() {
   if (!activeManifest.value) return
 
   if (datasetMode.value === 'vmt') {
-    if (disabledVmtPeriods.value[vmtPeriod.value]) {
-      const nextPeriod = VMT_PERIODS.find((period) => metricHasData(period.value, 'vmt'))?.value
-      if (nextPeriod) {
-        vmtPeriod.value = nextPeriod
+    if (disabledModelAreas.value[modelArea.value]) {
+      modelArea.value = activeManifest.value.model_areas?.[0] ?? 'Statewide'
+    }
+    if (!VMT_PA_IDS.includes(vmtPa.value)) {
+      vmtPa.value = 'P'
+    }
+    if (!vmtPurposeGroups.value.some((group) => group.value === vmtPurposeGroup.value)) {
+      vmtPurposeGroup.value = vmtPurposeGroups.value[0]?.value ?? 'PERSON'
+    }
+    const purposeFromUrl = allVmtPurposes.value.find((purpose) => (
+      purpose.value === vmtPurpose.value
+    ))
+    if (
+      purposeFromUrl?.group
+      && vmtPurposeGroups.value.some((group) => group.value === purposeFromUrl.group)
+      && purposeFromUrl.group !== vmtPurposeGroup.value
+    ) {
+      vmtPurposeGroup.value = purposeFromUrl.group
+    }
+    if (!vmtPurposes.value.some((purpose) => purpose.value === vmtPurpose.value)) {
+      vmtPurpose.value = vmtPurposes.value[0]?.value ?? `${vmtPurposeGroup.value}_ALL`
+    }
+    if (disabledVmtPurposes.value[vmtPurpose.value]) {
+      const nextPurpose = vmtPurposes.value.find((purpose) => (
+        metricHasData(vmtMetricColumn(vmtPa.value, VMT_DAILY_PERIOD, purpose.value), 'vmt')
+      ))?.value
+      if (nextPurpose) {
+        vmtPurpose.value = nextPurpose
       }
     }
     return
@@ -679,18 +752,23 @@ function buildMetricColorExpression() {
   return [
     'case',
     ['has', normalizedColumn],
-    [
-      'interpolate',
-      ['linear'],
-      ['to-number', ['get', normalizedColumn]],
-      0, activePalette.value[0],
-      0.2, activePalette.value[1],
-      0.4, activePalette.value[2],
-      0.6, activePalette.value[3],
-      0.8, activePalette.value[4],
-      1, activePalette.value[5],
-    ],
+    buildColorRampExpression(['to-number', ['get', normalizedColumn]]),
     '#d9d9d9',
+  ]
+}
+
+function buildColorRampExpression(inputExpression) {
+  const palette = activePalette.value.length ? activePalette.value : ACCESS_PALETTE
+  const stops = palette.flatMap((color, index) => {
+    const stop = palette.length > 1 ? index / (palette.length - 1) : 0
+    return [Number(stop.toFixed(4)), color]
+  })
+
+  return [
+    'interpolate',
+    ['linear'],
+    inputExpression,
+    ...stops,
   ]
 }
 
@@ -743,10 +821,15 @@ function refreshDataLayer({ fit = false } = {}) {
     })
 
     selectedRows.value = []
+    activeMetricRowsByTaz.value = new Map()
+    const requestId = ++vmtRowsRequestId
     recordCount.value = result.recordCount
     minValue.value = result.minValue
     maxValue.value = result.maxValue
     hasData.value = result.hasData
+    if (datasetMode.value === 'vmt' && result.hasData) {
+      loadActiveVmtRowsByTaz(requestId)
+    }
     refreshStyleExpressions()
     setExtentBounds(getSelectionBounds() ?? getManifestBounds())
 
@@ -756,10 +839,59 @@ function refreshDataLayer({ fit = false } = {}) {
   } catch (error) {
     console.error('Failed to refresh data layer:', error)
     selectedRows.value = []
+    activeMetricRowsByTaz.value = new Map()
+    vmtRowsRequestId += 1
     recordCount.value = 0
     minValue.value = 0
     maxValue.value = 0
     hasData.value = false
+  }
+}
+
+async function loadActiveVmtRowsByTaz(requestId) {
+  try {
+    const years = activeModelScenarioYears.value.length
+      ? activeModelScenarioYears.value
+      : [scenarioYear.value]
+    const results = await Promise.all(
+      years.map((year) => loadDataRows({
+        datasetId: 'vmt',
+        scenarioYear: year,
+        modelArea: modelArea.value,
+        metricColumn: activeColumn.value,
+      })),
+    )
+    const rowsByTaz = new Map()
+
+    for (const result of results) {
+      for (const row of result.rows) {
+        const tazId = Number(row.CO_TAZID)
+        if (!Number.isFinite(tazId)) continue
+
+        const rowScenarioYear = Number(row.ScenarioYear)
+        const valueProperty = getMetricProperty(rowScenarioYear, activeColumn.value)
+        const availabilityProperty = getMetricAvailabilityProperty(rowScenarioYear, activeColumn.value)
+        const existing = rowsByTaz.get(tazId) ?? {
+          CO_TAZID: tazId,
+          ModelArea: row.ModelArea ?? modelArea.value,
+        }
+
+        existing[valueProperty] = row.metric_value
+        existing[availabilityProperty] = 1
+        if (rowScenarioYear === Number(scenarioYear.value)) {
+          existing.metric_value = row.metric_value
+          existing.access_value = row.access_value
+          existing[activeColumn.value] = row.metric_value
+        }
+        rowsByTaz.set(tazId, existing)
+      }
+    }
+
+    if (requestId === vmtRowsRequestId) {
+      activeMetricRowsByTaz.value = rowsByTaz
+    }
+  } catch (error) {
+    console.warn('Failed to load VMT hover values:', error)
   }
 }
 
@@ -894,9 +1026,23 @@ function onTravelModeChange(value) {
   travelMode.value = value
 }
 
-function onVmtPeriodChange(value) {
-  if (disabledVmtPeriods.value[value]) return
-  vmtPeriod.value = value
+function onVmtPaChange(value) {
+  if (!VMT_PA_IDS.includes(value)) return
+  vmtPa.value = value
+  ensureAvailableMetricSelection()
+}
+
+function onVmtPurposeGroupChange(value) {
+  if (!vmtPurposeGroups.value.some((group) => group.value === value)) return
+  vmtPurposeGroup.value = value
+  vmtPurpose.value = vmtPurposes.value[0]?.value ?? `${value}_ALL`
+  ensureAvailableMetricSelection()
+}
+
+function onVmtPurposeChange(value) {
+  if (disabledVmtPurposes.value[value]) return
+  vmtPurpose.value = value
+  ensureAvailableMetricSelection()
 }
 
 async function onDownload() {

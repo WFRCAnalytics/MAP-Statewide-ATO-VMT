@@ -23,6 +23,7 @@ const props = defineProps({
   scenarioYear: { type: Number, required: true },
   activeColumn: { type: String, required: true },
   metricLabel: { type: String, required: true },
+  metricRowsByTaz: { type: Object, default: null },
 })
 
 const emit = defineEmits(['feature-hover'])
@@ -72,8 +73,25 @@ function buildHTML(properties) {
   `
 }
 
+function getTazId(properties) {
+  const value = properties.CO_TAZID ?? properties.co_tazid ?? properties.tazid
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
+}
+
+function enrichProperties(properties) {
+  if (props.datasetMode !== 'vmt') return properties
+
+  const tazId = getTazId(properties)
+  if (tazId == null) return properties
+
+  const metricProperties = props.metricRowsByTaz?.get?.(tazId)
+  return metricProperties ? { ...properties, ...metricProperties } : properties
+}
+
 function refreshPinnedContent() {
   if (props.pinned && lastProperties) {
+    lastProperties = enrichProperties(lastProperties)
     pinnedContent.value = buildHTML(lastProperties)
   }
 }
@@ -89,7 +107,7 @@ onMounted(() => {
   hoverHandler = (event) => {
     if (!event.features?.length) return
     props.map.getCanvas().style.cursor = 'pointer'
-    lastProperties = event.features[0].properties ?? {}
+    lastProperties = enrichProperties(event.features[0].properties ?? {})
     emit('feature-hover', lastProperties)
     const html = buildHTML(lastProperties)
     if (props.pinned) {
@@ -132,7 +150,12 @@ watch(() => props.pinned, (pinned) => {
 })
 
 watch(
-  [() => props.scenarioYear, () => props.activeColumn, () => props.metricLabel],
+  [
+    () => props.scenarioYear,
+    () => props.activeColumn,
+    () => props.metricLabel,
+    () => props.metricRowsByTaz,
+  ],
   refreshPinnedContent,
 )
 

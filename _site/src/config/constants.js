@@ -1,8 +1,28 @@
 export const MAP_CENTER = [-111.891, 40.7608]
 export const MAP_ZOOM = 7
 export const BRAND_BLUE = '#233A57'
-export const ACCESS_PALETTE = ['#EDF8B1', '#C7E9B4', '#7FCDBB', '#41B6C4', '#1D91C0', '#225EA8']
-export const VMT_PALETTE = ['#f7fcfd', '#d0d1e6', '#a6bddb', '#67a9cf', '#ef8a62', '#b2182b']
+export const ACCESS_PALETTE = [
+  'rgb(241, 244, 255)',
+  'rgb(49, 57, 138)',
+  'rgb(27, 169, 230)',
+  'rgb(0, 167, 78)',
+  'rgb(108, 183, 74)',
+  'rgb(224, 157, 46)',
+  'rgb(235, 103, 45)',
+  'rgb(229, 39, 45)',
+  'rgb(175, 41, 68)',
+]
+export const VMT_PALETTE = [
+  '#fff7bc',
+  '#fee391',
+  '#fec44f',
+  '#fe9929',
+  '#ec7014',
+  '#cc4c02',
+  '#993404',
+  '#662506',
+  '#3b1603',
+]
 export const DATA_BASE_URL = new URL('data/', window.location.href).href.replace(/\/$/, '')
 
 export const DATASETS = [
@@ -32,10 +52,29 @@ export const TRAVEL_MODES = [
   { label: 'Bike', value: 'Bike', icon: 'fa-bicycle' },
 ]
 
-export const VMT_PERIODS = [
-  { label: 'AM', value: 'AM_VMT', icon: 'fa-sun' },
-  { label: 'Midday', value: 'MD_VMT', icon: 'fa-cloud-sun' },
-  { label: 'PM', value: 'PM_VMT', icon: 'fa-city' },
-  { label: 'Evening', value: 'EV_VMT', icon: 'fa-moon' },
-  { label: 'Daily', value: 'DY_VMT', icon: 'fa-calendar-day' },
+export const VMT_PA_OPTIONS = [
+  { label: 'Produced', value: 'P', icon: 'fa-arrow-up-from-bracket' },
+  { label: 'Attracted', value: 'A', icon: 'fa-arrow-down-to-bracket' },
+]
+
+export const VMT_PURPOSE_GROUPS = [
+  { label: 'Household', value: 'PERSON', all_value: 'PERSON_ALL' },
+  { label: 'Truck', value: 'TRUCK', all_value: 'TRUCK_ALL' },
+  { label: 'Other', value: 'OTHER', all_value: 'OTHER_ALL' },
+]
+
+export const VMT_PURPOSES = [
+  { label: 'All', value: 'PERSON_ALL', group: 'PERSON', is_group_total: true },
+  { label: 'HBC', value: 'HBC', group: 'PERSON', is_group_total: false },
+  { label: 'HBS Pr', value: 'HBS_Pr', group: 'PERSON', is_group_total: false },
+  { label: 'HBS Sc', value: 'HBS_Sc', group: 'PERSON', is_group_total: false },
+  { label: 'HBS', value: 'HBS', group: 'PERSON', is_group_total: false },
+  { label: 'HBW', value: 'HBW', group: 'PERSON', is_group_total: false },
+  { label: 'NHB', value: 'NHB', group: 'PERSON', is_group_total: false },
+  { label: 'HBO', value: 'HBO', group: 'PERSON', is_group_total: false },
+  { label: 'All', value: 'TRUCK_ALL', group: 'TRUCK', is_group_total: true },
+  { label: 'LT', value: 'LT', group: 'TRUCK', is_group_total: false },
+  { label: 'MD', value: 'MD', group: 'TRUCK', is_group_total: false },
+  { label: 'HV', value: 'HV', group: 'TRUCK', is_group_total: false },
+  { label: 'All', value: 'OTHER_ALL', group: 'OTHER', is_group_total: true },
 ]

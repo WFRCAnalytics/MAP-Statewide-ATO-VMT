@@ -88,6 +88,7 @@ h1, h2, h3, h4, h5 {
   font-family: 'Open Sans', sans-serif;
 }
 .lu-select:focus { outline: none; border-color: #5a87c6; box-shadow: 0 0 0 2px rgba(90,135,198,0.2); }
+.lu-select option:disabled { color: #c8ced6; }
 
 .segmented-control {
   display: grid;
@@ -140,6 +141,14 @@ h1, h2, h3, h4, h5 {
 
 .travel-mode-row {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.vmt-period-row {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.vmt-period-row .mode-button {
+  padding: 7px 4px;
 }
 
 .sidebar-hr { border: none; border-top: 1px solid #dee2e6; margin: 10px 0; }
