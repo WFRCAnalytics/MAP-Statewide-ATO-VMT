@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-07T15:50:18.512534+00:00",
+  "generated_at": "2026-08-07T22:54:34.779130+00:00",
   "dataset": "vmt",
   "dataset_label": "VMT",
   "dataset_title": "Vehicle Miles Traveled",
@@ -27,7 +27,6 @@
   "metrics": [
     "A_DY_ALL",
     "A_DY_BUS",
-    "A_DY_HBC",
     "A_DY_HBO",
     "A_DY_HBS",
     "A_DY_HBW",
@@ -42,7 +41,6 @@
     "A_DY_TRUCK_ALL",
     "P_DY_ALL",
     "P_DY_BUS",
-    "P_DY_HBC",
     "P_DY_HBO",
     "P_DY_HBS",
     "P_DY_HBW",
@@ -55,9 +53,11 @@
     "P_DY_PERSON_ALL",
     "P_DY_REC",
     "P_DY_TRUCK_ALL",
+    "A_DY_HBC",
     "A_DY_HBS_Pr",
     "A_DY_HBS_Sc",
     "A_DY_XI",
+    "P_DY_HBC",
     "P_DY_HBS_Pr",
     "P_DY_HBS_Sc",
     "P_DY_IX"
@@ -217,11 +217,7 @@
       },
       "A_DY_BUS": {
         "min": 0.0,
-        "max": 20290.79
-      },
-      "A_DY_HBC": {
-        "min": 0.0,
-        "max": 93587.54999999999
+        "max": 6083.08
       },
       "A_DY_HBO": {
         "min": 0.0,
@@ -245,7 +241,7 @@
       },
       "A_DY_MD": {
         "min": 0.0,
-        "max": 15725.67
+        "max": 16275.32
       },
       "A_DY_NHB": {
         "min": 0.0,
@@ -253,7 +249,7 @@
       },
       "A_DY_OTH": {
         "min": 0.0,
-        "max": 256147.57
+        "max": 20290.79
       },
       "A_DY_OTHER_ALL": {
         "min": 0.0,
@@ -261,27 +257,23 @@
       },
       "A_DY_PERSON_ALL": {
         "min": 0.0,
-        "max": 93587.54999999999
+        "max": 64354.94
       },
       "A_DY_REC": {
         "min": 0.0,
-        "max": 6484.27
+        "max": 256147.57
       },
       "A_DY_TRUCK_ALL": {
         "min": 0.0,
-        "max": 47106.59
+        "max": 47356.47
       },
       "P_DY_ALL": {
         "min": 0.0,
-        "max": 100298.48999999999
+        "max": 100298.49
       },
       "P_DY_BUS": {
         "min": 0.0,
-        "max": 14905.98
-      },
-      "P_DY_HBC": {
-        "min": 0.0,
-        "max": 961.5600000000001
+        "max": 2561.0
       },
       "P_DY_HBO": {
         "min": 0.0,
@@ -305,7 +297,7 @@
       },
       "P_DY_MD": {
         "min": 0.0,
-        "max": 18626.41
+        "max": 19190.01
       },
       "P_DY_NHB": {
         "min": 0.0,
@@ -313,23 +305,27 @@
       },
       "P_DY_OTH": {
         "min": 0.0,
-        "max": 2020.53
+        "max": 14905.98
       },
       "P_DY_OTHER_ALL": {
         "min": 0.0,
-        "max": 18697.71
+        "max": 18649.88
       },
       "P_DY_PERSON_ALL": {
         "min": 0.0,
-        "max": 72168.55
+        "max": 71797.26
       },
       "P_DY_REC": {
         "min": 0.0,
-        "max": 4479.13
+        "max": 2752.3300000000004
       },
       "P_DY_TRUCK_ALL": {
         "min": 0.0,
-        "max": 51727.14
+        "max": 52289.61
+      },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 0.0
       },
       "A_DY_HBS_Pr": {
         "min": 0.0,
@@ -340,6 +336,10 @@
         "max": 0.0
       },
       "A_DY_XI": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBC": {
         "min": 0.0,
         "max": 0.0
       },
@@ -364,10 +364,6 @@
       "A_DY_BUS": {
         "min": 0.0,
         "max": 0.0
-      },
-      "A_DY_HBC": {
-        "min": 0.0,
-        "max": 220381.84
       },
       "A_DY_HBO": {
         "min": 0.0,
@@ -425,10 +421,6 @@
         "min": 0.0,
         "max": 0.0
       },
-      "P_DY_HBC": {
-        "min": 0.0,
-        "max": 6536.84
-      },
       "P_DY_HBO": {
         "min": 0.0,
         "max": 33354.47
@@ -477,6 +469,10 @@
         "min": 0.0,
         "max": 109759.34
       },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 220381.84
+      },
       "A_DY_HBS_Pr": {
         "min": 0.0,
         "max": 1134.91
@@ -488,6 +484,10 @@
       "A_DY_XI": {
         "min": 0.0,
         "max": 25748.31
+      },
+      "P_DY_HBC": {
+        "min": 0.0,
+        "max": 6536.84
       },
       "P_DY_HBS_Pr": {
         "min": 0.0,
@@ -509,23 +509,19 @@
       },
       "A_DY_BUS": {
         "min": 0.0,
-        "max": 21514.89
-      },
-      "A_DY_HBC": {
-        "min": 0.0,
-        "max": 76456.51999999999
+        "max": 6024.87
       },
       "A_DY_HBO": {
         "min": 0.0,
-        "max": 26676.550000000003
+        "max": 28984.74
       },
       "A_DY_HBS": {
         "min": 0.0,
-        "max": 3680.73
+        "max": 3681.33
       },
       "A_DY_HBW": {
         "min": 0.0,
-        "max": 34752.49
+        "max": 36451.29
       },
       "A_DY_HV": {
         "min": 0.0,
@@ -533,19 +529,19 @@
       },
       "A_DY_LT": {
         "min": 0.0,
-        "max": 11722.54
+        "max": 12561.92
       },
       "A_DY_MD": {
         "min": 0.0,
-        "max": 16882.41
+        "max": 17748.1
       },
       "A_DY_NHB": {
         "min": 0.0,
-        "max": 27785.239999999998
+        "max": 27787.17
       },
       "A_DY_OTH": {
         "min": 0.0,
-        "max": 275477.6
+        "max": 21514.89
       },
       "A_DY_OTHER_ALL": {
         "min": 0.0,
@@ -553,31 +549,27 @@
       },
       "A_DY_PERSON_ALL": {
         "min": 0.0,
-        "max": 76456.51999999999
+        "max": 69030.25
       },
       "A_DY_REC": {
         "min": 0.0,
-        "max": 6328.700000000001
+        "max": 275477.6
       },
       "A_DY_TRUCK_ALL": {
         "min": 0.0,
-        "max": 48314.57
+        "max": 48519.55
       },
       "P_DY_ALL": {
         "min": 0.0,
-        "max": 106518.52
+        "max": 106817.25
       },
       "P_DY_BUS": {
         "min": 0.0,
-        "max": 15800.6
-      },
-      "P_DY_HBC": {
-        "min": 0.0,
-        "max": 961.8
+        "max": 2734.8
       },
       "P_DY_HBO": {
         "min": 0.0,
-        "max": 46582.28
+        "max": 46630.05
       },
       "P_DY_HBS": {
         "min": 0.0,
@@ -585,7 +577,7 @@
       },
       "P_DY_HBW": {
         "min": 0.0,
-        "max": 27850.809999999998
+        "max": 27903.84
       },
       "P_DY_HV": {
         "min": 0.0,
@@ -593,11 +585,11 @@
       },
       "P_DY_LT": {
         "min": 0.0,
-        "max": 16824.34
+        "max": 16827.75
       },
       "P_DY_MD": {
         "min": 0.0,
-        "max": 18189.24
+        "max": 18853.010000000002
       },
       "P_DY_NHB": {
         "min": 0.0,
@@ -605,23 +597,27 @@
       },
       "P_DY_OTH": {
         "min": 0.0,
-        "max": 2068.32
+        "max": 15800.6
       },
       "P_DY_OTHER_ALL": {
         "min": 0.0,
-        "max": 19612.35
+        "max": 19566.22
       },
       "P_DY_PERSON_ALL": {
         "min": 0.0,
-        "max": 81499.61
+        "max": 81250.7
       },
       "P_DY_REC": {
         "min": 0.0,
-        "max": 4099.780000000001
+        "max": 3045.75
       },
       "P_DY_TRUCK_ALL": {
         "min": 0.0,
-        "max": 54703.45
+        "max": 55421.64
+      },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 0.0
       },
       "A_DY_HBS_Pr": {
         "min": 0.0,
@@ -632,6 +628,10 @@
         "max": 0.0
       },
       "A_DY_XI": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBC": {
         "min": 0.0,
         "max": 0.0
       },
@@ -656,10 +656,6 @@
       "A_DY_BUS": {
         "min": 0.0,
         "max": 0.0
-      },
-      "A_DY_HBC": {
-        "min": 0.0,
-        "max": 225958.82
       },
       "A_DY_HBO": {
         "min": 0.0,
@@ -717,10 +713,6 @@
         "min": 0.0,
         "max": 0.0
       },
-      "P_DY_HBC": {
-        "min": 0.0,
-        "max": 6282.9400000000005
-      },
       "P_DY_HBO": {
         "min": 0.0,
         "max": 31602.12
@@ -769,6 +761,10 @@
         "min": 0.0,
         "max": 118863.34
       },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 225958.82
+      },
       "A_DY_HBS_Pr": {
         "min": 0.0,
         "max": 1088.21
@@ -780,6 +776,10 @@
       "A_DY_XI": {
         "min": 0.0,
         "max": 28311.620000000003
+      },
+      "P_DY_HBC": {
+        "min": 0.0,
+        "max": 6282.9400000000005
       },
       "P_DY_HBS_Pr": {
         "min": 0.0,
@@ -801,11 +801,7 @@
       },
       "A_DY_BUS": {
         "min": 0.0,
-        "max": 22834.69
-      },
-      "A_DY_HBC": {
-        "min": 0.0,
-        "max": 101397.76000000001
+        "max": 6314.389999999999
       },
       "A_DY_HBO": {
         "min": 0.0,
@@ -829,7 +825,7 @@
       },
       "A_DY_MD": {
         "min": 0.0,
-        "max": 18105.57
+        "max": 18753.31
       },
       "A_DY_NHB": {
         "min": 0.0,
@@ -837,7 +833,7 @@
       },
       "A_DY_OTH": {
         "min": 0.0,
-        "max": 296286.01
+        "max": 22834.69
       },
       "A_DY_OTHER_ALL": {
         "min": 0.0,
@@ -845,15 +841,15 @@
       },
       "A_DY_PERSON_ALL": {
         "min": 0.0,
-        "max": 101397.76000000001
+        "max": 70581.23
       },
       "A_DY_REC": {
         "min": 0.0,
-        "max": 6335.36
+        "max": 296286.01
       },
       "A_DY_TRUCK_ALL": {
         "min": 0.0,
-        "max": 51487.090000000004
+        "max": 51681.03
       },
       "P_DY_ALL": {
         "min": 0.0,
@@ -861,11 +857,7 @@
       },
       "P_DY_BUS": {
         "min": 0.0,
-        "max": 16497.309999999998
-      },
-      "P_DY_HBC": {
-        "min": 0.0,
-        "max": 1067.62
+        "max": 2907.97
       },
       "P_DY_HBO": {
         "min": 0.0,
@@ -889,7 +881,7 @@
       },
       "P_DY_MD": {
         "min": 0.0,
-        "max": 19931.19
+        "max": 20585.85
       },
       "P_DY_NHB": {
         "min": 0.0,
@@ -897,23 +889,27 @@
       },
       "P_DY_OTH": {
         "min": 0.0,
-        "max": 3149.81
+        "max": 16497.309999999998
       },
       "P_DY_OTHER_ALL": {
         "min": 0.0,
-        "max": 20032.39
+        "max": 19986.71
       },
       "P_DY_PERSON_ALL": {
         "min": 0.0,
-        "max": 78608.63
+        "max": 78236.96
       },
       "P_DY_REC": {
         "min": 0.0,
-        "max": 4014.0499999999997
+        "max": 4217.43
       },
       "P_DY_TRUCK_ALL": {
         "min": 0.0,
-        "max": 59150.83
+        "max": 59805.49
+      },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 0.0
       },
       "A_DY_HBS_Pr": {
         "min": 0.0,
@@ -924,6 +920,10 @@
         "max": 0.0
       },
       "A_DY_XI": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBC": {
         "min": 0.0,
         "max": 0.0
       },
@@ -948,10 +948,6 @@
       "A_DY_BUS": {
         "min": 0.0,
         "max": 0.0
-      },
-      "A_DY_HBC": {
-        "min": 0.0,
-        "max": 246408.03999999998
       },
       "A_DY_HBO": {
         "min": 0.0,
@@ -1009,10 +1005,6 @@
         "min": 0.0,
         "max": 0.0
       },
-      "P_DY_HBC": {
-        "min": 0.0,
-        "max": 5705.719999999999
-      },
       "P_DY_HBO": {
         "min": 0.0,
         "max": 33833.08
@@ -1061,6 +1053,10 @@
         "min": 0.0,
         "max": 119851.47
       },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 246408.03999999998
+      },
       "A_DY_HBS_Pr": {
         "min": 0.0,
         "max": 1197.5900000000001
@@ -1072,6 +1068,10 @@
       "A_DY_XI": {
         "min": 0.0,
         "max": 30156.82
+      },
+      "P_DY_HBC": {
+        "min": 0.0,
+        "max": 5705.719999999999
       },
       "P_DY_HBS_Pr": {
         "min": 0.0,
@@ -1145,11 +1145,11 @@
     "simplification_method": "per_taz_boundary"
   },
   "build": {
-    "metrics_fingerprint": "2f74cde7a333a963ad17dc67cf0098dd27e24eb8be9806ee9f74e97d37050dd4",
-    "tiles_fingerprint": "ce9fe0c6dff1a198f275cd7ea795a457664878b142a5670e722a90307f74f157",
+    "metrics_fingerprint": "99116ab27584937cec2ed1a1f759a907bba36f41996e97793437b288cef96f09",
+    "tiles_fingerprint": "7a7ebd5e6ae1c7c6daf81666d17ed2efcc25d4e8f5441b8be2cb19318fff6a50",
     "metrics_build_version": 4,
     "tiles_build_version": 6,
-    "metrics_status": "reused",
-    "tiles_status": "reused"
+    "metrics_status": "rebuilt",
+    "tiles_status": "rebuilt"
   }
 }
