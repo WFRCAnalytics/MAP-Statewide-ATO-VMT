@@ -147,6 +147,7 @@ export function initMap(containerId, options = {}) {
     zoom: MAP_ZOOM,
     maxPitch: 85,
     preserveDrawingBuffer: true,
+    attributionControl: false,
   })
 
   mapInstance.addControl(

@@ -2,6 +2,9 @@
   <nav id="navbar">
     <img :src="logoUrl" alt="WFRC" />
     <span>Statewide ATO and VMT Explorer</span>
+    <button class="navbar-info-button" type="button" @click="showSplash = true" aria-label="Open site information">
+      <i class="fa-solid fa-circle-info"></i>
+    </button>
   </nav>
 
   <div id="app-layout">
@@ -88,6 +91,11 @@
       <div id="loading-overlay" v-if="isLoading">
         <div class="loading-spinner"></div>
         <div class="loading-text">{{ loadingText }}</div>
+      </div>
+      <div class="map-attribution-inline">
+        <a href="https://maplibre.org/" target="_blank" rel="noreferrer">MapLibre</a>
+        <span>|</span>
+        <span>&copy; <a href="https://carto.com/about-carto/" target="_blank" rel="noreferrer">CARTO</a>, &copy; <a href="http://www.openstreetmap.org/about/" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors</span>
       </div>
     </main>
   </div>

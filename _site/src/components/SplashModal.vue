@@ -7,27 +7,32 @@
       </div>
       <div class="splash-body">
         <p>Statewide access-to-opportunities and vehicle-miles-traveled analysis for Utah model areas.</p>
-        <div class="feature-grid">
-          <div class="feature-item">
-            <div class="feature-icon"><i class="fa-solid fa-map-location-dot"></i></div>
-            <div class="feature-title">TAZ Geography</div>
-            <div class="feature-text">CO_TAZID map units</div>
+        <section class="splash-section">
+          <h3>How This Information Is Generated</h3>
+          <div class="process-list">
+            <div class="process-step">
+              <div class="process-number">1</div>
+              <div class="process-copy">
+                <div class="process-title">Existing and Future Transportation Network</div>
+                <div class="process-text">Scenario networks establish the roadway and transportation system used for analysis.</div>
+              </div>
+            </div>
+            <div class="process-step">
+              <div class="process-number">2</div>
+              <div class="process-copy">
+                <div class="process-title">Household and Job Forecast</div>
+                <div class="process-text">Land use assumptions provide the households and employment distribution for each scenario year.</div>
+              </div>
+            </div>
+            <div class="process-step">
+              <div class="process-number">3</div>
+              <div class="process-copy">
+                <div class="process-title">TDM Generated Outputs</div>
+                <div class="process-text">Model outputs are summarized to TAZs to support ATO and VMT comparisons across model areas.</div>
+              </div>
+            </div>
           </div>
-          <div class="feature-item">
-            <div class="feature-icon"><i class="fa-solid fa-layer-group"></i></div>
-            <div class="feature-title">Scenario Views</div>
-            <div class="feature-text">Year and area filters</div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon"><i class="fa-solid fa-box-archive"></i></div>
-            <div class="feature-title">ATO and VMT</div>
-            <div class="feature-text">Access metrics and link VMT summarized to TAZs</div>
-          </div>
-        </div>
-        <div class="instruction-box">
-          <i class="fa-solid fa-circle-info"></i>
-          <strong> Data status:</strong> ATO and VMT layers are loaded from processed PMTiles.
-        </div>
+        </section>
       </div>
       <div class="splash-footer">
         <button class="btn-get-started" @click="$emit('close')">GET STARTED</button>
