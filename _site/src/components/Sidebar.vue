@@ -106,7 +106,25 @@
         </button>
       </div>
 
-      <span v-if="datasetMode === 'vmt'" class="step-header">Step 5: Choose Purpose</span>
+      <span v-if="datasetMode === 'vmt'" class="step-header">Step 5: Display VMT As</span>
+      <div v-if="datasetMode === 'vmt'" class="segmented-control vmt-rate-row">
+        <button
+          v-for="rate in vmtRateOptions"
+          :key="rate.value"
+          class="segmented-button"
+          :class="{ active: vmtRate === rate.value }"
+          :title="rate.label"
+          @click="$emit('update:vmtRate', rate.value)"
+        >
+          <i :class="`fa-solid ${rate.icon}`"></i>
+          <span>{{ rate.label }}</span>
+        </button>
+      </div>
+      <div v-if="datasetMode === 'vmt'" class="geography-note">
+        Produced VMT is usually most useful Per HH, attracted VMT Per Job. HH Equiv = households + 0.55 jobs.
+      </div>
+
+      <span v-if="datasetMode === 'vmt'" class="step-header">Step 6: Choose Purpose</span>
       <div v-if="datasetMode === 'vmt'" class="vmt-purpose-row">
         <select
           class="lu-select"
@@ -163,6 +181,7 @@ import {
   SCENARIO_YEARS,
   TRAVEL_MODES,
   VMT_PA_OPTIONS,
+  VMT_RATE_OPTIONS,
   VMT_PURPOSE_GROUPS,
   VMT_PURPOSES,
 } from '../config/constants.js'
@@ -179,8 +198,10 @@ defineProps({
   accessTarget: { type: String, required: true },
   travelMode: { type: String, required: true },
   vmtPa: { type: String, default: 'P' },
+  vmtRate: { type: String, default: 'TOTAL' },
   vmtPurposeGroup: { type: String, default: 'PERSON' },
   vmtPurpose: { type: String, default: 'PERSON_ALL' },
+  vmtRateOptions: { type: Array, default: () => VMT_RATE_OPTIONS },
   vmtPurposeGroups: { type: Array, default: () => VMT_PURPOSE_GROUPS },
   vmtPurposes: { type: Array, default: () => VMT_PURPOSES },
   disabledAccessTargets: { type: Object, default: () => ({}) },
@@ -202,6 +223,7 @@ defineEmits([
   'update:accessTarget',
   'update:travelMode',
   'update:vmtPa',
+  'update:vmtRate',
   'update:vmtPurposeGroup',
   'update:vmtPurpose',
 ])

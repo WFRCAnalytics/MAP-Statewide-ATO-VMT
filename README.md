@@ -32,7 +32,7 @@ Run the numbered scripts from the repo root, in order:
 
 ```bash
 uv run scripts/00_download_raw_data.py     # downloads + extracts raw data into data/raw/
-uv run scripts/01_prepare_data_layers.py    # checks raw inputs are present
+uv run scripts/01_prepare_data_layers.py   # checks raw inputs are present
 uv run scripts/02_process_ato_layers.py    # builds data/processed/ato/
 uv run scripts/03_process_vmt_layers.py    # builds data/processed/vmt/
 uv run scripts/04_build_web_artifacts.py   # publishes both into _site/public/data/

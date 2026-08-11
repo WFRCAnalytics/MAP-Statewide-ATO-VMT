@@ -177,6 +177,15 @@ h1, h2, h3, h4, h5 {
   margin-bottom: 10px;
 }
 
+.vmt-rate-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.vmt-rate-row .segmented-button {
+  padding: 7px 4px;
+  font-size: 0.78rem;
+}
+
 .vmt-purpose-row .lu-select {
   margin-bottom: 0;
 }
@@ -889,6 +898,9 @@ h1, h2, h3, h4, h5 {
   #map-area.overview-visible #pinned-tooltip-container { bottom: 166px; }
   .vmt-purpose-row {
     grid-template-columns: 1fr;
+  }
+  .vmt-rate-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .map-attribution-inline {
     left: 10px;

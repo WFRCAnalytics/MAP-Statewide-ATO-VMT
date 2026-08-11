@@ -49,6 +49,12 @@ PA_OPTIONS = [
     {"value": "P", "label": "Produced"},
     {"value": "A", "label": "Attracted"},
 ]
+RATE_BASE_OPTIONS = [
+    {"value": "TOTAL", "label": "Total VMT", "suffix": ""},
+    {"value": "PER_HH", "label": "Per Household", "suffix": "__PER_HH"},
+    {"value": "PER_JOB", "label": "Per Job", "suffix": "__PER_JOB"},
+    {"value": "PER_HHEQ", "label": "Per HH Equivalent", "suffix": "__PER_HHEQ"},
+]
 PERIOD_ORDER = ["DY"]
 PERIOD_LABELS = {
     "AM": "AM",
@@ -81,6 +87,10 @@ GEOGRAPHY_SOURCE_COLUMNS = {
 }
 ALL_PURPOSE_VALUE = "ALL"
 ALL_PURPOSE_LABEL = "All Purposes"
+SOCIO_HH_COLUMN = "TOTHH"
+SOCIO_JOB_COLUMN = "TOTEMP"
+SOCIO_HHEQ_COLUMN = "HH_EQUIV"
+SOCIO_COLUMNS = [SOCIO_HH_COLUMN, SOCIO_JOB_COLUMN, SOCIO_HHEQ_COLUMN]
 PURPOSE_GROUPS = [
     {
         "value": "PERSON",
@@ -105,6 +115,10 @@ PURPOSE_GROUP_BY_VALUE = {
     purpose: group["value"] for group in PURPOSE_GROUPS for purpose in group["purposes"]
 }
 PURPOSE_GROUP_TOTAL_VALUES = {group["all_value"] for group in PURPOSE_GROUPS}
+RATE_BASE_SUFFIXES = {
+    option["value"]: option["suffix"] for option in RATE_BASE_OPTIONS
+}
+RATE_BASE_VALUES = [option["value"] for option in RATE_BASE_OPTIONS]
 
 PMTILES_LAYER_NAME = "vmt_taz"
 BOUNDARY_PMTILES_LAYER_NAME = "vmt_taz_boundary"
@@ -112,7 +126,7 @@ METRICS_FILENAME = "vmt_metrics.parquet"
 FILL_PMTILES_FILENAME = "vmt_taz.pmtiles"
 BOUNDARY_PMTILES_FILENAME = "vmt_taz_boundaries.pmtiles"
 METRICS_BUILD_VERSION = 6
-TILES_BUILD_VERSION = 8
+TILES_BUILD_VERSION = 9
 VMT_FILL_SIMPLIFY_TOLERANCE = 0.0012
 _MODEL_AREA_TAZ_IDS: dict[str, list[int]] = {}
 _STATEWIDE_VMT_ALLOWED_IDS: set[int] | None = None
@@ -146,6 +160,28 @@ def get_taz_crosswalk_path(config: dict, scenario_year: int) -> Path:
     )
 
 
+def get_statewide_socio_path(scenario_year: int) -> Path:
+    return (
+        REPO_ROOT
+        / "data"
+        / "raw"
+        / "0 - USTM"
+        / str(scenario_year)
+        / f"SE_COMBINED_{scenario_year}_NOSUBAREAS.CSV"
+    )
+
+
+def get_wf_socio_path(scenario_year: int) -> Path:
+    return (
+        REPO_ROOT
+        / "data"
+        / "raw"
+        / "1 - WF"
+        / str(scenario_year)
+        / "SE_File.dbf"
+    )
+
+
 def required_raw_files() -> list[dict]:
     files = [
         {
@@ -174,6 +210,32 @@ def required_raw_files() -> list[dict]:
                     "path": get_taz_crosswalk_path(config, scenario_year),
                 }
             )
+            if config["name"] == "Statewide":
+                files.append(
+                    {
+                        "kind": "Statewide socioeconomic CSV",
+                        "model_area": config["name"],
+                        "scenario_year": scenario_year,
+                        "path": get_statewide_socio_path(scenario_year),
+                    }
+                )
+                files.append(
+                    {
+                        "kind": "Wasatch Front socioeconomic DBF",
+                        "model_area": "Wasatch Front",
+                        "scenario_year": scenario_year,
+                        "path": get_wf_socio_path(scenario_year),
+                    }
+                )
+            elif config["name"] == "Wasatch Front":
+                files.append(
+                    {
+                        "kind": "Wasatch Front socioeconomic DBF",
+                        "model_area": config["name"],
+                        "scenario_year": scenario_year,
+                        "path": get_wf_socio_path(scenario_year),
+                    }
+                )
 
     return files
 
@@ -241,6 +303,16 @@ def purpose_group_metric_signature() -> list[dict]:
     ]
 
 
+def rate_base_signature() -> list[dict]:
+    return [
+        {
+            "value": option["value"],
+            "suffix": option["suffix"],
+        }
+        for option in RATE_BASE_OPTIONS
+    ]
+
+
 def metrics_input_files() -> list[Path]:
     return [
         item["path"]
@@ -265,6 +337,7 @@ def build_metrics_fingerprint() -> str:
             "input_columns": VMT_INPUT_COLUMNS,
             "all_purpose_value": ALL_PURPOSE_VALUE,
             "purpose_groups": purpose_group_metric_signature(),
+            "rate_bases": rate_base_signature(),
             "geometry": file_signature(TAZ_PATH),
             "files": [file_signature(path) for path in metrics_input_files()],
         }
@@ -482,6 +555,23 @@ def metric_column(pa: str, period: str, purpose_value: str) -> str:
     return f"{pa}_{period}_{purpose_value}"
 
 
+def metric_column_for_rate(base_column: str, rate_base: str) -> str:
+    suffix = RATE_BASE_SUFFIXES.get(rate_base, "")
+    return f"{base_column}{suffix}" if suffix else base_column
+
+
+def split_metric_column(metric_name: str) -> tuple[str, str]:
+    if "__" in metric_name:
+        base_column, rate_base = metric_name.split("__", 1)
+        if rate_base in RATE_BASE_VALUES:
+            return base_column, rate_base
+    return metric_name, "TOTAL"
+
+
+def is_rate_metric_column(metric_name: str) -> bool:
+    return split_metric_column(metric_name)[1] != "TOTAL"
+
+
 def purpose_group_for_value(purpose_value: str) -> str:
     return PURPOSE_GROUP_BY_VALUE.get(purpose_value, "OTHER")
 
@@ -553,6 +643,87 @@ def read_vmt_base_rows(path: Path) -> pd.DataFrame:
     )["Total"].sum()
     grouped["SourceTAZID"] = grouped["SourceTAZID"].astype("int32")
     return grouped
+
+
+def read_statewide_socio_data(path: Path) -> pd.DataFrame:
+    socio = pd.read_csv(
+        path,
+        usecols=["CO_TAZID", "SUBAREAID", "TOTHH", "TOTEMP"],
+        skipinitialspace=True,
+    )
+    socio["CO_TAZID"] = (
+        pd.to_numeric(socio["CO_TAZID"], errors="coerce").round().astype("Int64")
+    )
+    socio["SUBAREAID"] = (
+        pd.to_numeric(socio["SUBAREAID"], errors="coerce").round().astype("Int64")
+    )
+    socio[SOCIO_HH_COLUMN] = pd.to_numeric(
+        socio[SOCIO_HH_COLUMN], errors="coerce"
+    ).fillna(0)
+    socio[SOCIO_JOB_COLUMN] = pd.to_numeric(
+        socio[SOCIO_JOB_COLUMN], errors="coerce"
+    ).fillna(0)
+    socio = socio.dropna(subset=["CO_TAZID", "SUBAREAID"])
+    socio = socio.loc[socio["CO_TAZID"] > 0].copy()
+    socio["CO_TAZID"] = socio["CO_TAZID"].astype("int32")
+    socio["SUBAREAID"] = socio["SUBAREAID"].astype("int16")
+    return socio[["CO_TAZID", "SUBAREAID", SOCIO_HH_COLUMN, SOCIO_JOB_COLUMN]]
+
+
+def read_wf_socio_data(path: Path) -> pd.DataFrame:
+    socio = gpd.read_file(path)[["CO_TAZID", "SUBAREAID", "TOTHH", "TOTEMP"]].copy()
+    socio["CO_TAZID"] = (
+        pd.to_numeric(socio["CO_TAZID"], errors="coerce").round().astype("Int64")
+    )
+    socio["SUBAREAID"] = (
+        pd.to_numeric(socio["SUBAREAID"], errors="coerce").round().astype("Int64")
+    )
+    socio[SOCIO_HH_COLUMN] = pd.to_numeric(
+        socio[SOCIO_HH_COLUMN], errors="coerce"
+    ).fillna(0)
+    socio[SOCIO_JOB_COLUMN] = pd.to_numeric(
+        socio[SOCIO_JOB_COLUMN], errors="coerce"
+    ).fillna(0)
+    socio = socio.dropna(subset=["CO_TAZID", "SUBAREAID"])
+    socio = socio.loc[socio["CO_TAZID"] > 0].copy()
+    socio["CO_TAZID"] = socio["CO_TAZID"].astype("int32")
+    socio["SUBAREAID"] = socio["SUBAREAID"].astype("int16")
+    return socio[["CO_TAZID", "SUBAREAID", SOCIO_HH_COLUMN, SOCIO_JOB_COLUMN]]
+
+
+def read_socio_data(model_area: str, scenario_year: int) -> pd.DataFrame:
+    if model_area == "Statewide":
+        statewide = read_statewide_socio_data(get_statewide_socio_path(scenario_year))
+        wf = read_wf_socio_data(get_wf_socio_path(scenario_year))
+        wf = wf.drop_duplicates(subset=["CO_TAZID"], keep="last")
+        statewide = statewide.merge(
+            wf.rename(
+                columns={
+                    SOCIO_HH_COLUMN: f"{SOCIO_HH_COLUMN}_wf",
+                    SOCIO_JOB_COLUMN: f"{SOCIO_JOB_COLUMN}_wf",
+                }
+            )[["CO_TAZID", f"{SOCIO_HH_COLUMN}_wf", f"{SOCIO_JOB_COLUMN}_wf"]],
+            on="CO_TAZID",
+            how="left",
+            validate="1:1",
+        )
+        subarea_one = statewide["SUBAREAID"] == 1
+        statewide.loc[subarea_one, SOCIO_HH_COLUMN] = statewide.loc[
+            subarea_one, f"{SOCIO_HH_COLUMN}_wf"
+        ].fillna(statewide.loc[subarea_one, SOCIO_HH_COLUMN])
+        statewide.loc[subarea_one, SOCIO_JOB_COLUMN] = statewide.loc[
+            subarea_one, f"{SOCIO_JOB_COLUMN}_wf"
+        ].fillna(statewide.loc[subarea_one, SOCIO_JOB_COLUMN])
+        socio = statewide[["CO_TAZID", SOCIO_HH_COLUMN, SOCIO_JOB_COLUMN]].copy()
+    elif model_area == "Wasatch Front":
+        socio = read_wf_socio_data(get_wf_socio_path(scenario_year))[
+            ["CO_TAZID", SOCIO_HH_COLUMN, SOCIO_JOB_COLUMN]
+        ].copy()
+    else:
+        raise ValueError(f"Unsupported VMT model area for socioeconomic inputs: {model_area}")
+
+    socio[SOCIO_HHEQ_COLUMN] = socio[SOCIO_HH_COLUMN] + (0.55 * socio[SOCIO_JOB_COLUMN])
+    return socio.drop_duplicates(subset=["CO_TAZID"], keep="last")
 
 
 def add_summary_rows(base: pd.DataFrame) -> pd.DataFrame:
@@ -629,6 +800,33 @@ def read_vmt_metrics_for_file(
     return wide
 
 
+def add_rate_metric_columns(metrics: pd.DataFrame) -> pd.DataFrame:
+    metrics = metrics.copy()
+    base_metric_columns = get_total_metric_columns(metrics)
+
+    denominators = {
+        "PER_HH": SOCIO_HH_COLUMN,
+        "PER_JOB": SOCIO_JOB_COLUMN,
+        "PER_HHEQ": SOCIO_HHEQ_COLUMN,
+    }
+
+    for base_column in base_metric_columns:
+        for rate_base, denominator_column in denominators.items():
+            derived_column = metric_column_for_rate(base_column, rate_base)
+            denominator = pd.to_numeric(
+                metrics[denominator_column], errors="coerce"
+            ).fillna(0)
+            numerator = pd.to_numeric(metrics[base_column], errors="coerce").fillna(0)
+            metrics[derived_column] = (
+                (numerator / denominator)
+                .where(denominator > 0, 0)
+                .replace([pd.NA, pd.NaT], 0)
+                .fillna(0)
+            )
+
+    return metrics
+
+
 def read_vmt_metrics() -> pd.DataFrame:
     frames = []
 
@@ -686,14 +884,19 @@ def read_vmt_metrics() -> pd.DataFrame:
                 validate="1:1",
             )
             complete[metric_columns] = complete[metric_columns].fillna(0)
+            socio = read_socio_data(model_area, scenario_year)
+            complete = complete.merge(socio, on="CO_TAZID", how="left", validate="1:1")
+            complete[SOCIO_COLUMNS] = complete[SOCIO_COLUMNS].fillna(0)
             complete_frames.append(complete)
 
     metrics = pd.concat(complete_frames, ignore_index=True)
     metrics["ScenarioYear"] = metrics["ScenarioYear"].astype("int16")
     metrics["CO_TAZID"] = metrics["CO_TAZID"].astype("int32")
     apply_statewide_subarea_mask(metrics)
+    metrics = add_rate_metric_columns(metrics)
     lookup = read_geography_lookup()
-    geography_frames = [metrics[first_columns + metric_columns].copy()]
+    geography_metric_columns = get_metric_columns(metrics)
+    geography_frames = [metrics[first_columns + SOCIO_COLUMNS + geography_metric_columns].copy()]
     for geography_type in ("CITY",):
         geography_frames.append(
             aggregate_vmt_metrics_by_geography(metrics, lookup, geography_type)
@@ -714,7 +917,16 @@ def get_metric_columns(metrics: pd.DataFrame) -> list[str]:
             "GeographyId",
             "GeographyName",
             "CO_TAZID",
+            *SOCIO_COLUMNS,
         }
+    ]
+
+
+def get_total_metric_columns(metrics: pd.DataFrame) -> list[str]:
+    return [
+        column
+        for column in get_metric_columns(metrics)
+        if split_metric_column(column)[1] == "TOTAL"
     ]
 
 
@@ -724,7 +936,7 @@ def aggregate_vmt_metrics_by_geography(
     geography_type: str,
 ) -> pd.DataFrame:
     source_column = GEOGRAPHY_SOURCE_COLUMNS[geography_type]
-    metric_columns = get_metric_columns(taz_metrics)
+    total_metric_columns = get_total_metric_columns(taz_metrics)
     merged = taz_metrics.merge(lookup, on="CO_TAZID", how="left", validate="m:1")
     merged["GeographyType"] = geography_type
     merged["GeographyName"] = merged[source_column].map(
@@ -741,10 +953,15 @@ def aggregate_vmt_metrics_by_geography(
         )
         .agg(
             GeographyName=("GeographyName", "first"),
-            **{column: (column, "sum") for column in metric_columns},
+            **{
+                column: (column, "sum")
+                for column in [*SOCIO_COLUMNS, *total_metric_columns]
+            },
         )
     )
     aggregated["CO_TAZID"] = pd.Series(pd.NA, index=aggregated.index, dtype="Int64")
+    aggregated = add_rate_metric_columns(aggregated)
+    metric_columns = get_metric_columns(aggregated)
     return aggregated[
         [
             "ScenarioYear",
@@ -753,6 +970,7 @@ def aggregate_vmt_metrics_by_geography(
             "GeographyId",
             "GeographyName",
             "CO_TAZID",
+            *SOCIO_COLUMNS,
             *metric_columns,
         ]
     ]
@@ -878,6 +1096,7 @@ def build_tile_features(
     metric_columns = [
         column for column in get_metric_columns(metrics) if not column.endswith("_norm")
     ]
+    total_metric_columns = get_total_metric_columns(metrics)
     statewide_allowed_ids = get_statewide_vmt_allowed_taz_ids()
     area_frames = []
     join_columns = ["ModelArea", "GeographyType", "GeographyId"]
@@ -911,6 +1130,8 @@ def build_tile_features(
                     if metric_columns
                     else pd.Series(0, index=geography_index.index, dtype="int8")
                 )
+                for socio_column in SOCIO_COLUMNS:
+                    wide_columns[f"y{int(scenario_year)}_{socio_column}"] = year_metrics[socio_column]
                 for column in metric_columns:
                     value_column = f"y{int(scenario_year)}_{column}"
                     normal_column = f"{value_column}_norm"
@@ -966,12 +1187,12 @@ def build_tile_features(
         elif column.endswith("_norm"):
             tile_gdf[column] = tile_gdf[column].fillna(0).astype("float32").round(2)
         elif column.startswith("y"):
-            tile_gdf[column] = (
-                pd.to_numeric(tile_gdf[column], errors="coerce")
-                .fillna(0)
-                .round()
-                .astype("int32")
-            )
+            metric_name = column.split("_", 1)[1] if "_" in column else column
+            numeric = pd.to_numeric(tile_gdf[column], errors="coerce").fillna(0)
+            if is_rate_metric_column(metric_name):
+                tile_gdf[column] = numeric.astype("float32").round(2)
+            else:
+                tile_gdf[column] = numeric.round().astype("int32")
 
     return tile_gdf
 
@@ -982,7 +1203,17 @@ def slim_fill_tile_features(tile_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         "GeographyType",
         "GeographyId",
         "StatewideVmtMasked",
-        *[column for column in tile_gdf.columns if column.startswith("y")],
+        *[
+            column
+            for column in tile_gdf.columns
+            if column.startswith("y")
+            and (
+                column.split("_", 1)[1] in SOCIO_COLUMNS
+                or split_metric_column(column.split("_", 1)[1])[1] == "TOTAL"
+            )
+            and not column.endswith("_norm")
+            and not column.endswith("_has")
+        ],
         "geometry",
     ]
     return tile_gdf[keep_columns].copy()
@@ -991,7 +1222,8 @@ def slim_fill_tile_features(tile_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 def purpose_options_from_metrics(metrics: pd.DataFrame) -> list[dict]:
     purpose_values = set()
     for column in get_metric_columns(metrics):
-        parts = column.split("_", 2)
+        base_column, _ = split_metric_column(column)
+        parts = base_column.split("_", 2)
         if len(parts) == 3:
             purpose_values.add(parts[2])
 
@@ -1035,7 +1267,8 @@ def purpose_options_from_metrics(metrics: pd.DataFrame) -> list[dict]:
 def purpose_group_options_from_metrics(metrics: pd.DataFrame) -> list[dict]:
     purpose_values = set()
     for column in get_metric_columns(metrics):
-        parts = column.split("_", 2)
+        base_column, _ = split_metric_column(column)
+        parts = base_column.split("_", 2)
         if len(parts) == 3:
             purpose_values.add(parts[2])
 
@@ -1053,7 +1286,8 @@ def purpose_group_options_from_metrics(metrics: pd.DataFrame) -> list[dict]:
 def period_options_from_metrics(metrics: pd.DataFrame) -> list[dict]:
     periods = set()
     for column in get_metric_columns(metrics):
-        parts = column.split("_", 2)
+        base_column, _ = split_metric_column(column)
+        parts = base_column.split("_", 2)
         if len(parts) == 3:
             periods.add(parts[1])
 
@@ -1120,6 +1354,7 @@ def build_manifest(
         "metrics": metric_columns,
         "metric_dimensions": {
             "pa": PA_OPTIONS,
+            "rate_bases": RATE_BASE_OPTIONS,
             "periods": period_options_from_metrics(metrics),
             "purpose_groups": purpose_group_options_from_metrics(metrics),
             "purposes": purpose_options_from_metrics(metrics),

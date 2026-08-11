@@ -61,6 +61,13 @@ export const VMT_PA_OPTIONS = [
   { label: 'Attracted', value: 'A', icon: 'fa-arrow-down-to-bracket' },
 ]
 
+export const VMT_RATE_OPTIONS = [
+  { label: 'Total', value: 'TOTAL', icon: 'fa-road' },
+  { label: 'Per HH', value: 'PER_HH', icon: 'fa-house' },
+  { label: 'Per Job', value: 'PER_JOB', icon: 'fa-briefcase' },
+  { label: 'HH Equiv', value: 'PER_HHEQ', icon: 'fa-scale-balanced' },
+]
+
 export const VMT_PURPOSE_GROUPS = [
   { label: 'Household', value: 'PERSON', all_value: 'PERSON_ALL' },
   { label: 'Truck', value: 'TRUCK', all_value: 'TRUCK_ALL' },

@@ -178,6 +178,7 @@ export async function loadDataRows({ datasetId = 'ato', scenarioYear, modelArea,
   const modelAreaSql = quoteString(modelArea)
   const geographyTypeSql = quoteString(geographyType)
   const idColumns = datasetId === 'ato' ? '"SA_TAZID",' : ''
+  const extraColumns = datasetId === 'vmt' ? '"TOTHH", "TOTEMP", "HH_EQUIV",' : ''
 
   const table = await conn.query(`
     SELECT
@@ -187,6 +188,7 @@ export async function loadDataRows({ datasetId = 'ato', scenarioYear, modelArea,
       "GeographyId",
       "GeographyName",
       ${idColumns}
+      ${extraColumns}
       "CO_TAZID",
       CAST(${metricIdentifier} AS DOUBLE) AS metric_value
     FROM read_parquet('${metricsUrl}')

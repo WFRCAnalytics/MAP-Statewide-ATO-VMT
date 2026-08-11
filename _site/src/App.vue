@@ -20,6 +20,8 @@
       :access-target="accessTarget"
       :travel-mode="travelMode"
       :vmt-pa="vmtPa"
+      :vmt-rate="vmtRate"
+      :vmt-rate-options="vmtRateOptions"
       :vmt-purpose-group="vmtPurposeGroup"
       :vmt-purpose="vmtPurpose"
       :vmt-purpose-groups="vmtPurposeGroups"
@@ -40,6 +42,7 @@
       @update:accessTarget="onAccessTargetChange"
       @update:travelMode="onTravelModeChange"
       @update:vmtPa="onVmtPaChange"
+      @update:vmtRate="onVmtRateChange"
       @update:vmtPurposeGroup="onVmtPurposeGroupChange"
       @update:vmtPurpose="onVmtPurposeChange"
     />
@@ -132,6 +135,7 @@ import {
   TRAVEL_MODES,
   VMT_PALETTE,
   VMT_PA_OPTIONS,
+  VMT_RATE_OPTIONS,
   VMT_PURPOSE_GROUPS,
   VMT_PURPOSES,
 } from './config/constants.js'
@@ -157,6 +161,7 @@ const GEOGRAPHY_TYPE_IDS = GEOGRAPHY_LEVELS.map((level) => level.value)
 const ACCESS_TARGET_IDS = ACCESS_TARGETS.map((target) => target.value)
 const TRAVEL_MODE_IDS = TRAVEL_MODES.map((mode) => mode.value)
 const VMT_PA_IDS = VMT_PA_OPTIONS.map((option) => option.value)
+const VMT_RATE_IDS = VMT_RATE_OPTIONS.map((option) => option.value)
 const VMT_PURPOSE_GROUP_IDS = VMT_PURPOSE_GROUPS.map((group) => group.value)
 const VMT_DAILY_PERIOD = 'DY'
 const INTERACTION_MODES = ['pan', 'rotate']
@@ -194,6 +199,7 @@ function parseUrlState() {
   const exaggeration = parseNumberParam(params.get('exaggeration'))
   const interaction = params.get('interaction')
   const geographyType = params.get('geography')
+  const vmtRate = params.get('rate')
 
   return {
     datasetMode: DATASET_IDS.includes(dataset) ? dataset : null,
@@ -203,6 +209,7 @@ function parseUrlState() {
     accessTarget: ACCESS_TARGET_IDS.includes(params.get('target')) ? params.get('target') : null,
     travelMode: TRAVEL_MODE_IDS.includes(params.get('mode')) ? params.get('mode') : null,
     vmtPa: VMT_PA_IDS.includes(params.get('pa')) ? params.get('pa') : null,
+    vmtRate: VMT_RATE_IDS.includes(vmtRate) ? vmtRate : null,
     vmtPurposeGroup: VMT_PURPOSE_GROUP_IDS.includes(params.get('purposeGroup')) ? params.get('purposeGroup') : null,
     vmtPurpose: params.get('purpose'),
     fillOpacity: opacity != null ? Math.max(0, Math.min(1, opacity)) : null,
@@ -237,6 +244,7 @@ const geographyType = ref(initialUrlState.geographyType ?? 'TAZ')
 const accessTarget = ref(initialUrlState.accessTarget ?? 'Job')
 const travelMode = ref(initialUrlState.travelMode ?? 'Auto')
 const vmtPa = ref(initialUrlState.vmtPa ?? 'P')
+const vmtRate = ref(initialUrlState.vmtRate ?? defaultVmtRateForPa(initialUrlState.vmtPa ?? 'P'))
 const vmtPurposeGroup = ref(initialUrlState.vmtPurposeGroup ?? 'PERSON')
 const vmtPurpose = ref(initialUrlState.vmtPurpose ?? 'PERSON_ALL')
 const interactionMode = ref(initialUrlState.interactionMode ?? 'pan')
@@ -277,6 +285,9 @@ const activeDatasetLabel = computed(() => activeDataset.value.label)
 const scenarioYears = computed(() => activeManifest.value?.scenario_years ?? SCENARIO_YEARS)
 const modelAreas = computed(() => MODEL_AREAS)
 const supportedModelAreas = computed(() => activeManifest.value?.model_areas ?? MODEL_AREAS)
+const vmtRateOptions = computed(() => (
+  activeManifest.value?.metric_dimensions?.rate_bases ?? VMT_RATE_OPTIONS
+))
 const vmtPurposeGroups = computed(() => (
   activeManifest.value?.metric_dimensions?.purpose_groups ?? VMT_PURPOSE_GROUPS
 ))
@@ -287,17 +298,21 @@ const vmtPurposes = computed(() => (
 const activeColumn = computed(() => (
   datasetMode.value === 'ato'
     ? `${accessTarget.value}_by${travelMode.value}`
-    : `${vmtPa.value}_${VMT_DAILY_PERIOD}_${vmtPurpose.value}`
+    : vmtMetricColumn(vmtPa.value, VMT_DAILY_PERIOD, vmtPurpose.value, vmtRate.value)
 ))
 const activeMetricLabel = computed(() => {
   if (datasetMode.value === 'vmt') {
     const pa = VMT_PA_OPTIONS.find((item) => item.value === vmtPa.value)
+    const rate = vmtRateOptions.value.find((item) => item.value === vmtRate.value)
     const purposeGroup = vmtPurposeGroups.value.find((item) => item.value === vmtPurposeGroup.value)
     const purpose = vmtPurposes.value.find((item) => item.value === vmtPurpose.value)
     const purposeLabel = purpose?.is_group_total
       ? purposeGroup?.label
       : purpose?.label ?? vmtPurpose.value
-    return `${pa?.label ?? vmtPa.value} ${purposeLabel} VMT`
+    const rateLabel = rate?.label ?? vmtRate.value
+    return vmtRate.value === 'TOTAL'
+      ? `${pa?.label ?? vmtPa.value} ${purposeLabel} VMT`
+      : `${pa?.label ?? vmtPa.value} ${purposeLabel} VMT ${rateLabel}`
   }
 
   const target = ACCESS_TARGETS.find((item) => item.value === accessTarget.value)
@@ -352,7 +367,7 @@ const disabledVmtPurposes = computed(() => (
   Object.fromEntries(
     vmtPurposes.value.map((purpose) => [
       purpose.value,
-      !metricHasData(vmtMetricColumn(vmtPa.value, VMT_DAILY_PERIOD, purpose.value), 'vmt'),
+      !metricHasData(vmtMetricColumn(vmtPa.value, VMT_DAILY_PERIOD, purpose.value, vmtRate.value), 'vmt'),
     ]),
   )
 ))
@@ -445,11 +460,13 @@ function syncUrlState() {
     params.set('target', accessTarget.value)
     params.set('mode', travelMode.value)
     params.delete('pa')
+    params.delete('rate')
     params.delete('period')
     params.delete('purposeGroup')
     params.delete('purpose')
   } else {
     params.set('pa', vmtPa.value)
+    params.set('rate', vmtRate.value)
     params.delete('period')
     params.set('purposeGroup', vmtPurposeGroup.value)
     params.set('purpose', vmtPurpose.value)
@@ -663,8 +680,14 @@ function metricColumnFor(target, mode) {
   return `${target}_by${mode}`
 }
 
-function vmtMetricColumn(pa, period, purpose) {
-  return `${pa}_${period}_${purpose}`
+function defaultVmtRateForPa(pa) {
+  return pa === 'A' ? 'PER_JOB' : 'PER_HH'
+}
+
+function vmtMetricColumn(pa, period, purpose, rate = 'TOTAL') {
+  const baseColumn = `${pa}_${period}_${purpose}`
+  if (rate === 'TOTAL') return baseColumn
+  return `${baseColumn}__${rate}`
 }
 
 function buildAtoDescription() {
@@ -686,7 +709,18 @@ function buildAtoDescription() {
 function buildVmtDescription() {
   const directionLabel = vmtPa.value === 'A' ? 'attracted to' : 'produced by'
   const purposeDescription = getVmtPurposeDescription(vmtPurpose.value, vmtPurposeGroup.value)
-  return `Vehicle miles traveled ${directionLabel} ${purposeDescription}.`
+  const rateDescription = getVmtRateDescription(vmtRate.value)
+  return `Vehicle miles traveled ${directionLabel} ${purposeDescription}${rateDescription}.`
+}
+
+function getVmtRateDescription(rateValue) {
+  const rateDescriptions = {
+    TOTAL: '',
+    PER_HH: ' Per HH',
+    PER_JOB: ' Per Job',
+    PER_HHEQ: ' HH Equiv',
+  }
+  return rateDescriptions[rateValue] ?? ''
 }
 
 function getVmtPurposeDescription(purposeValue, purposeGroupValue) {
@@ -754,6 +788,10 @@ function ensureAvailableMetricSelection() {
     if (!VMT_PA_IDS.includes(vmtPa.value)) {
       vmtPa.value = 'P'
     }
+    const availableRateIds = vmtRateOptions.value.map((option) => option.value)
+    if (!availableRateIds.includes(vmtRate.value)) {
+      vmtRate.value = defaultVmtRateForPa(vmtPa.value)
+    }
     if (!vmtPurposeGroups.value.some((group) => group.value === vmtPurposeGroup.value)) {
       vmtPurposeGroup.value = vmtPurposeGroups.value[0]?.value ?? 'PERSON'
     }
@@ -772,7 +810,7 @@ function ensureAvailableMetricSelection() {
     }
     if (disabledVmtPurposes.value[vmtPurpose.value]) {
       const nextPurpose = vmtPurposes.value.find((purpose) => (
-        metricHasData(vmtMetricColumn(vmtPa.value, VMT_DAILY_PERIOD, purpose.value), 'vmt')
+        metricHasData(vmtMetricColumn(vmtPa.value, VMT_DAILY_PERIOD, purpose.value, vmtRate.value), 'vmt')
       ))?.value
       if (nextPurpose) {
         vmtPurpose.value = nextPurpose
@@ -834,32 +872,70 @@ function addRoadLayers(map, cartoSource, firstLabelId) {
 }
 
 function buildMetricColorExpression() {
-  const normalizedColumn = `${activeMetricProperty.value}_norm`
+  const valueColumn = activeMetricProperty.value
   const maskExpression = ['==', ['to-number', ['coalesce', ['get', 'StatewideVmtMasked'], 0]], 1]
+
+  if (datasetMode.value === 'vmt') {
+    const valueExpression = buildVmtTileValueExpression()
+    if (!(Number.isFinite(minValue.value) && Number.isFinite(maxValue.value)) || maxValue.value <= minValue.value) {
+      return [
+        'case',
+        ['has', getVmtBaseMetricProperty()],
+        activePalette.value[activePalette.value.length - 1] ?? '#d9d9d9',
+        '#d9d9d9',
+      ]
+    }
+
+    const valueRamp = buildColorRampExpression(
+      valueExpression,
+      minValue.value,
+      maxValue.value,
+    )
+
+    if (modelArea.value === 'Statewide') {
+      return [
+        'case',
+        maskExpression,
+        '#ffffff',
+        ['has', getVmtBaseMetricProperty()],
+        valueRamp,
+        '#d9d9d9',
+      ]
+    }
+
+    return [
+      'case',
+      ['has', getVmtBaseMetricProperty()],
+      valueRamp,
+      '#d9d9d9',
+    ]
+  }
 
   if (datasetMode.value === 'vmt' && modelArea.value === 'Statewide') {
     return [
       'case',
       maskExpression,
       '#ffffff',
-      ['has', normalizedColumn],
-      buildColorRampExpression(['to-number', ['get', normalizedColumn]]),
+      ['has', `${valueColumn}_norm`],
+      buildColorRampExpression(['to-number', ['get', `${valueColumn}_norm`]]),
       '#d9d9d9',
     ]
   }
 
   return [
     'case',
-    ['has', normalizedColumn],
-    buildColorRampExpression(['to-number', ['get', normalizedColumn]]),
+    ['has', `${valueColumn}_norm`],
+    buildColorRampExpression(['to-number', ['get', `${valueColumn}_norm`]]),
     '#d9d9d9',
   ]
 }
 
-function buildColorRampExpression(inputExpression) {
+function buildColorRampExpression(inputExpression, minStop = 0, maxStop = 1) {
   const palette = activePalette.value.length ? activePalette.value : ACCESS_PALETTE
+  const spread = maxStop - minStop
   const stops = palette.flatMap((color, index) => {
-    const stop = palette.length > 1 ? index / (palette.length - 1) : 0
+    const ratio = palette.length > 1 ? index / (palette.length - 1) : 0
+    const stop = spread > 0 ? minStop + (ratio * spread) : minStop
     return [Number(stop.toFixed(4)), color]
   })
 
@@ -872,6 +948,20 @@ function buildColorRampExpression(inputExpression) {
 }
 
 function buildExtrusionExpression() {
+  if (datasetMode.value === 'vmt') {
+    if (!(Number.isFinite(minValue.value) && Number.isFinite(maxValue.value)) || maxValue.value <= minValue.value) {
+      return 0
+    }
+
+    return [
+      'interpolate',
+      ['linear'],
+      buildVmtTileValueExpression(),
+      minValue.value, 0,
+      maxValue.value, 4500 * extrusionExaggeration.value,
+    ]
+  }
+
   const normalizedColumn = `${activeMetricProperty.value}_norm`
   return [
     'interpolate',
@@ -879,6 +969,44 @@ function buildExtrusionExpression() {
     ['to-number', ['coalesce', ['get', normalizedColumn], 0]],
     0, 0,
     1, 4500 * extrusionExaggeration.value,
+  ]
+}
+
+function getVmtBaseMetricColumn() {
+  return `${vmtPa.value}_${VMT_DAILY_PERIOD}_${vmtPurpose.value}`
+}
+
+function getVmtBaseMetricProperty() {
+  return getMetricProperty(scenarioYear.value, getVmtBaseMetricColumn())
+}
+
+function getVmtDenominatorProperty() {
+  const denominatorByRate = {
+    PER_HH: 'TOTHH',
+    PER_JOB: 'TOTEMP',
+    PER_HHEQ: 'HH_EQUIV',
+  }
+  const denominatorColumn = denominatorByRate[vmtRate.value]
+  return denominatorColumn ? getMetricProperty(scenarioYear.value, denominatorColumn) : null
+}
+
+function buildVmtTileValueExpression() {
+  const baseMetricProperty = getVmtBaseMetricProperty()
+  const denominatorProperty = getVmtDenominatorProperty()
+
+  if (!denominatorProperty || vmtRate.value === 'TOTAL') {
+    return ['to-number', ['coalesce', ['get', baseMetricProperty], 0]]
+  }
+
+  return [
+    'case',
+    ['>', ['to-number', ['coalesce', ['get', denominatorProperty], 0]], 0],
+    [
+      '/',
+      ['to-number', ['coalesce', ['get', baseMetricProperty], 0]],
+      ['to-number', ['coalesce', ['get', denominatorProperty], 0]],
+    ],
+    0,
   ]
 }
 
@@ -891,6 +1019,14 @@ function buildModelAreaFilter() {
 }
 
 function buildMetricFilter() {
+  if (datasetMode.value === 'vmt') {
+    return [
+      'all',
+      ['==', ['get', 'ModelArea'], modelArea.value],
+      ['==', ['get', 'GeographyType'], geographyType.value],
+    ]
+  }
+
   return [
     'all',
     ['==', ['get', 'ModelArea'], modelArea.value],
@@ -1139,7 +1275,17 @@ function onTravelModeChange(value) {
 
 function onVmtPaChange(value) {
   if (!VMT_PA_IDS.includes(value)) return
+  const shouldResetRate = ['PER_HH', 'PER_JOB'].includes(vmtRate.value)
   vmtPa.value = value
+  if (shouldResetRate) {
+    vmtRate.value = defaultVmtRateForPa(value)
+  }
+  ensureAvailableMetricSelection()
+}
+
+function onVmtRateChange(value) {
+  if (!VMT_RATE_IDS.includes(value)) return
+  vmtRate.value = value
   ensureAvailableMetricSelection()
 }
 
@@ -1178,6 +1324,7 @@ async function onDownload() {
       'GeographyType',
       'GeographyName',
       'GeographyId',
+      ...(datasetMode.value === 'vmt' ? ['TOTHH', 'TOTEMP', 'HH_EQUIV'] : []),
       ...(geographyType.value === 'TAZ'
         ? datasetMode.value === 'ato'
           ? ['SA_TAZID', 'CO_TAZID']
