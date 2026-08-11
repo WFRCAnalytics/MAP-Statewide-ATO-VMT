@@ -85,7 +85,12 @@
         :metric-label="activeMetricLabel"
         :min-value="minValue"
         :max-value="maxValue"
-        :palette="activePalette"
+        :palette="activeLegendPalette"
+        :custom-items="activeLegendItems"
+        :show-mode-toggle="showLegendModeToggle"
+        :legend-mode="legendMode"
+        :mode-options="LEGEND_MODE_OPTIONS"
+        @update:legendMode="onLegendModeChange"
       />
       <LayerControl :layer-visible="layerVisible" @toggle-layer="onToggleLayer" />
       <OverviewMap
@@ -166,6 +171,10 @@ const VMT_PURPOSE_GROUP_IDS = VMT_PURPOSE_GROUPS.map((group) => group.value)
 const VMT_DAILY_PERIOD = 'DY'
 const INTERACTION_MODES = ['pan', 'rotate']
 const MAX_TILT = 85
+const LEGEND_MODE_OPTIONS = [
+  { label: 'Continuous', value: 'continuous' },
+  { label: 'Quintiles', value: 'quantiles' },
+]
 const DEFAULT_LAYER_VISIBLE = {
   'metric-fill': true,
   'taz-outline': true,
@@ -250,6 +259,7 @@ const vmtPurpose = ref(initialUrlState.vmtPurpose ?? 'PERSON_ALL')
 const interactionMode = ref(initialUrlState.interactionMode ?? 'pan')
 const fillOpacity = ref(initialUrlState.fillOpacity ?? 0.78)
 const extrusionExaggeration = ref(initialUrlState.exaggeration ?? 1.5)
+const legendMode = ref('continuous')
 const is3D = ref(initialUrlState.is3D)
 const mapPitch = ref(initialUrlState.mapView?.pitch ?? (initialUrlState.is3D ? 45 : 0))
 const pinnedTooltip = ref(initialUrlState.pinnedTooltip)
@@ -326,8 +336,27 @@ const activeMetricDescription = computed(() => {
 
   return buildAtoDescription()
 })
+const showLegendModeToggle = computed(() => (
+  datasetMode.value === 'vmt' && vmtRate.value !== 'TOTAL'
+))
 const activePalette = computed(() => (
   datasetMode.value === 'vmt' ? VMT_PALETTE : ACCESS_PALETTE
+))
+const quantilePalette = computed(() => {
+  if (datasetMode.value === 'vmt') {
+    return ['#a6bddb', '#67a9cf', '#3690c0', '#1f8aab', '#02818a']
+  }
+
+  const palette = activePalette.value.length ? activePalette.value : ACCESS_PALETTE
+  if (palette.length <= 5) return palette
+  return [0, 0.25, 0.5, 0.75, 1].map((ratio) => (
+    palette[Math.round(ratio * (palette.length - 1))]
+  ))
+})
+const activeLegendPalette = computed(() => (
+  legendMode.value === 'quantiles' && showLegendModeToggle.value
+    ? quantilePalette.value
+    : activePalette.value
 ))
 const activeMetricProperty = computed(() => getMetricProperty(scenarioYear.value, activeColumn.value))
 const activeMetricAvailabilityProperty = computed(() => (
@@ -371,6 +400,17 @@ const disabledVmtPurposes = computed(() => (
     ]),
   )
 ))
+const currentMetricValues = computed(() => {
+  if (datasetMode.value !== 'vmt') return []
+  return [...activeMetricRowsByGeography.value.values()]
+    .map((row) => Number(row.metric_value))
+    .filter((value) => Number.isFinite(value))
+})
+const quantileBreaks = computed(() => computeQuantileBreaks(currentMetricValues.value, 5))
+const activeLegendItems = computed(() => {
+  if (legendMode.value !== 'quantiles' || !showLegendModeToggle.value) return []
+  return buildQuantileLegendItems()
+})
 
 onMounted(() => {
   mapInstance.value = initMap('map', {
@@ -594,10 +634,19 @@ function addDatasetLayers(map, datasetId, manifest, firstLabelId) {
   const extrusionLayerId = `${datasetId}-taz-extrusion`
   const lineLayerId = `${datasetId}-taz-line`
   const isActive = datasetId === datasetMode.value
+  const buildVersion = manifest.build?.tiles_fingerprint
+    ?? manifest.build?.metrics_fingerprint
+    ?? manifest.build?.generated_at
+    ?? null
+  const withVersionParam = (path) => {
+    if (!buildVersion) return `${DATA_BASE_URL}/${path}`
+    const separator = path.includes('?') ? '&' : '?'
+    return `${DATA_BASE_URL}/${path}${separator}v=${encodeURIComponent(buildVersion)}`
+  }
 
   map.addSource(sourceId, {
     type: 'vector',
-    url: `pmtiles://${DATA_BASE_URL}/${manifest.files.pmtiles}`,
+    url: `pmtiles://${withVersionParam(manifest.files.pmtiles)}`,
   })
 
   map.addLayer({
@@ -631,7 +680,7 @@ function addDatasetLayers(map, datasetId, manifest, firstLabelId) {
   if (manifest.files.boundaries_pmtiles) {
     map.addSource(boundarySourceId, {
       type: 'vector',
-      url: `pmtiles://${DATA_BASE_URL}/${manifest.files.boundaries_pmtiles}`,
+      url: `pmtiles://${withVersionParam(manifest.files.boundaries_pmtiles)}`,
     })
 
     map.addLayer({
@@ -643,9 +692,16 @@ function addDatasetLayers(map, datasetId, manifest, firstLabelId) {
       minzoom: 6,
       layout: { visibility: getLineVisibility(datasetId) },
       paint: {
-        'line-color': '#557799',
-        'line-width': 0.8,
-        'line-opacity': 0.45,
+        'line-color': '#98a8b8',
+        'line-width': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          6, 0.35,
+          9, 0.5,
+          12, 0.7,
+        ],
+        'line-opacity': 0.35,
       },
     }, firstLabelId)
   }
@@ -700,44 +756,54 @@ function buildAtoDescription() {
   }[travelMode.value] ?? travelMode.value.toLowerCase()
 
   if (travelMode.value === 'Auto') {
-    return `${targetLabel} within ${modeLabel}.`
+    return `${targetLabel} within ${modeLabel} (${formatViewContext()}).`
   }
 
-  return `${targetLabel} reachable by ${modeLabel}.`
+  return `${targetLabel} reachable by ${modeLabel} (${formatViewContext()}).`
 }
 
 function buildVmtDescription() {
   const directionLabel = vmtPa.value === 'A' ? 'attracted to' : 'produced by'
   const purposeDescription = getVmtPurposeDescription(vmtPurpose.value, vmtPurposeGroup.value)
   const rateDescription = getVmtRateDescription(vmtRate.value)
-  return `Vehicle miles traveled ${directionLabel} ${purposeDescription}${rateDescription}.`
+  return `Vehicle miles traveled ${directionLabel} ${purposeDescription}${rateDescription} (${formatViewContext()}).`
 }
 
 function getVmtRateDescription(rateValue) {
   const rateDescriptions = {
     TOTAL: '',
-    PER_HH: ' Per HH',
-    PER_JOB: ' Per Job',
-    PER_HHEQ: ' HH Equiv',
+    PER_HH: ' per household',
+    PER_JOB: ' per job',
+    PER_HHEQ: ' per household equivalent',
   }
   return rateDescriptions[rateValue] ?? ''
+}
+
+function formatViewContext() {
+  const geographyLabel = geographyType.value === 'CITY' ? 'City Level' : 'TAZ Level'
+  return `${geographyLabel}, ${scenarioYear.value}`
 }
 
 function getVmtPurposeDescription(purposeValue, purposeGroupValue) {
   const purposeDescriptions = {
     PERSON_ALL: 'all household trips',
-    HBC: 'home-based change trips',
-    HBS_Pr: 'home-based shopping and personal trips',
-    HBS_Sc: 'home-based school trips',
-    HBS: 'home-based social and recreational trips',
+    HBC: 'home-based college trips',
+    HBS_Pr: 'home-based primary school trips',
+    HBS_Sc: 'home-based secondary school trips',
+    HBS: 'home-based school trips',
     HBW: 'home-based work trips',
     NHB: 'non-home-based trips',
     HBO: 'other home-based trips',
+    BUS: 'long-distance bus trips',
+    OTH: 'other trips',
+    REC: 'recreation trips',
+    XI: 'external-internal trips',
+    IX: 'internal-external trips',
     TRUCK_ALL: 'all truck trips',
     LT: 'light truck trips',
     MD: 'medium truck trips',
     HV: 'heavy truck trips',
-    OTHER_ALL: 'other trips',
+    OTHER_ALL: 'all other trips',
   }
 
   if (purposeDescriptions[purposeValue]) {
@@ -877,6 +943,26 @@ function buildMetricColorExpression() {
 
   if (datasetMode.value === 'vmt') {
     const valueExpression = buildVmtTileValueExpression()
+    const quantileExpression = buildQuantileColorExpression(valueExpression)
+    if (quantileExpression) {
+      if (modelArea.value === 'Statewide') {
+        return [
+          'case',
+          maskExpression,
+          '#ffffff',
+          ['has', getVmtBaseMetricProperty()],
+          quantileExpression,
+          '#d9d9d9',
+        ]
+      }
+
+      return [
+        'case',
+        ['has', getVmtBaseMetricProperty()],
+        quantileExpression,
+        '#d9d9d9',
+      ]
+    }
     if (!(Number.isFinite(minValue.value) && Number.isFinite(maxValue.value)) || maxValue.value <= minValue.value) {
       return [
         'case',
@@ -945,6 +1031,78 @@ function buildColorRampExpression(inputExpression, minStop = 0, maxStop = 1) {
     inputExpression,
     ...stops,
   ]
+}
+
+function quantile(sortedValues, ratio) {
+  if (!sortedValues.length) return 0
+  const position = (sortedValues.length - 1) * ratio
+  const lowerIndex = Math.floor(position)
+  const upperIndex = Math.ceil(position)
+  const lowerValue = sortedValues[lowerIndex]
+  const upperValue = sortedValues[upperIndex]
+  if (lowerIndex === upperIndex) return lowerValue
+  return lowerValue + ((upperValue - lowerValue) * (position - lowerIndex))
+}
+
+function computeQuantileBreaks(values, binCount = 5) {
+  if (legendMode.value !== 'quantiles' || !showLegendModeToggle.value) return []
+  const positiveValues = values
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .sort((a, b) => a - b)
+  if (positiveValues.length < 2) return []
+
+  return Array.from({ length: binCount - 1 }, (_, index) => (
+    quantile(positiveValues, (index + 1) / binCount)
+  ))
+}
+
+function buildQuantileColorExpression(valueExpression) {
+  if (legendMode.value !== 'quantiles' || !showLegendModeToggle.value) return null
+  if (!quantileBreaks.value.length) return null
+
+  const palette = quantilePalette.value.length ? quantilePalette.value : VMT_PALETTE
+  const expression = ['case', ['<=', valueExpression, 0], palette[0]]
+
+  quantileBreaks.value.forEach((threshold, index) => {
+    expression.push(['<=', valueExpression, threshold], palette[Math.min(index, palette.length - 1)])
+  })
+
+  expression.push(palette[Math.min(quantileBreaks.value.length, palette.length - 1)])
+  return expression
+}
+
+function formatLegendValue(value) {
+  if (!Number.isFinite(value)) return '0'
+  if (Math.abs(value) >= 100) return Math.round(value).toLocaleString()
+  if (Math.abs(value) >= 10) return value.toFixed(1).replace(/\.0$/, '')
+  return value.toFixed(2).replace(/0$/, '').replace(/\.0$/, '')
+}
+
+function buildQuantileLegendItems() {
+  const palette = quantilePalette.value.length ? quantilePalette.value : VMT_PALETTE
+  const positiveValues = currentMetricValues.value
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .sort((a, b) => a - b)
+
+  if (!positiveValues.length || !quantileBreaks.value.length) return []
+
+  const items = []
+  let lowerBound = 0
+
+  quantileBreaks.value.forEach((threshold, index) => {
+    items.push({
+      color: palette[Math.min(index, palette.length - 1)],
+      label: `${formatLegendValue(lowerBound)} to ${formatLegendValue(threshold)}`,
+    })
+    lowerBound = threshold
+  })
+
+  items.push({
+    color: palette[Math.min(quantileBreaks.value.length, palette.length - 1)],
+    label: `${formatLegendValue(lowerBound)}+`,
+  })
+
+  return items
 }
 
 function buildExtrusionExpression() {
@@ -1302,6 +1460,12 @@ function onVmtPurposeChange(value) {
   ensureAvailableMetricSelection()
 }
 
+function onLegendModeChange(value) {
+  if (!LEGEND_MODE_OPTIONS.some((option) => option.value === value)) return
+  legendMode.value = value
+  refreshStyleExpressions()
+}
+
 async function onDownload() {
   if (!hasData.value) return
   isLoading.value = true
@@ -1380,6 +1544,11 @@ watch(activeColumn, () => {
   refreshDataLayer({ fit: false })
   syncUrlState()
 })
+watch(activeMetricRowsByGeography, () => {
+  if (legendMode.value === 'quantiles' && showLegendModeToggle.value) {
+    refreshStyleExpressions()
+  }
+})
 watch(modelArea, () => {
   activeTazProperties.value = null
   ensureAvailableMetricSelection()
@@ -1391,6 +1560,11 @@ watch(geographyType, () => {
   ensureAvailableMetricSelection()
   refreshDataLayer({ fit: true })
   syncUrlState()
+})
+watch(showLegendModeToggle, (visible) => {
+  if (!visible && legendMode.value !== 'continuous') {
+    legendMode.value = 'continuous'
+  }
 })
 watch(pinnedTooltip, () => syncUrlState())
 </script>

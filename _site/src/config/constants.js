@@ -13,15 +13,15 @@ export const ACCESS_PALETTE = [
   'rgb(175, 41, 68)',
 ]
 export const VMT_PALETTE = [
-  '#fff7bc',
-  '#fee391',
-  '#fec44f',
-  '#fe9929',
-  '#ec7014',
-  '#cc4c02',
-  '#993404',
-  '#662506',
-  '#3b1603',
+  '#e3e8f0',
+  '#c7d5e4',
+  '#a6bddb',
+  '#67a9cf',
+  '#3690c0',
+  '#1f8aab',
+  '#02818a',
+  '#016c59',
+  '#014636',
 ]
 export const DATA_BASE_URL = new URL('data/', window.location.href).href.replace(/\/$/, '')
 

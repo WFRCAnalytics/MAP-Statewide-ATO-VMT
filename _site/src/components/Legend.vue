@@ -1,6 +1,18 @@
 <template>
   <div v-if="hasData" id="map-legend">
     <div class="legend-title">{{ metricLabel }}</div>
+    <div v-if="showModeToggle" class="legend-mode-toggle">
+      <button
+        v-for="option in modeOptions"
+        :key="option.value"
+        type="button"
+        class="legend-mode-button"
+        :class="{ active: legendMode === option.value }"
+        @click="$emit('update:legendMode', option.value)"
+      >
+        {{ option.label }}
+      </button>
+    </div>
     <div class="legend-items">
       <div v-for="(item, index) in legendItems" :key="`${index}-${item.label}`" class="legend-item">
         <span class="legend-swatch" :style="{ background: item.color }"></span>
@@ -20,7 +32,13 @@ const props = defineProps({
   minValue: { type: Number, default: 0 },
   maxValue: { type: Number, default: 0 },
   palette: { type: Array, default: () => ACCESS_PALETTE },
+  customItems: { type: Array, default: () => [] },
+  showModeToggle: { type: Boolean, default: false },
+  legendMode: { type: String, default: 'continuous' },
+  modeOptions: { type: Array, default: () => [] },
 })
+
+defineEmits(['update:legendMode'])
 
 function formatNumber(value) {
   if (!Number.isFinite(value)) return '0'
@@ -43,6 +61,8 @@ function roundToStep(value, step) {
 }
 
 const legendItems = computed(() => {
+  if (props.customItems.length) return props.customItems
+
   const span = props.maxValue - props.minValue
   const step = getRoundingStep(span)
   const palette = props.palette.length ? props.palette : ACCESS_PALETTE

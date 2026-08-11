@@ -51,9 +51,9 @@ PA_OPTIONS = [
 ]
 RATE_BASE_OPTIONS = [
     {"value": "TOTAL", "label": "Total VMT", "suffix": ""},
-    {"value": "PER_HH", "label": "Per Household", "suffix": "__PER_HH"},
+    {"value": "PER_HH", "label": "Per HH", "suffix": "__PER_HH"},
     {"value": "PER_JOB", "label": "Per Job", "suffix": "__PER_JOB"},
-    {"value": "PER_HHEQ", "label": "Per HH Equivalent", "suffix": "__PER_HHEQ"},
+    {"value": "PER_HHEQ", "label": "HH Equiv", "suffix": "__PER_HHEQ"},
 ]
 PERIOD_ORDER = ["DY"]
 PERIOD_LABELS = {
@@ -130,6 +130,7 @@ TILES_BUILD_VERSION = 9
 VMT_FILL_SIMPLIFY_TOLERANCE = 0.0012
 _MODEL_AREA_TAZ_IDS: dict[str, list[int]] = {}
 _STATEWIDE_VMT_ALLOWED_IDS: set[int] | None = None
+_STATEWIDE_MASKED_CITY_IDS: set[str] | None = None
 
 
 def get_vmt_configs() -> list[dict]:
@@ -457,6 +458,33 @@ def get_statewide_vmt_allowed_taz_ids() -> set[int]:
     return _STATEWIDE_VMT_ALLOWED_IDS
 
 
+def get_statewide_masked_city_ids() -> set[str]:
+    global _STATEWIDE_MASKED_CITY_IDS
+    if _STATEWIDE_MASKED_CITY_IDS is not None:
+        return _STATEWIDE_MASKED_CITY_IDS
+
+    allowed_ids = get_statewide_vmt_allowed_taz_ids()
+    lookup = read_geography_lookup()
+    city_lookup = lookup.copy()
+    city_lookup["IsAllowed"] = city_lookup["CO_TAZID"].isin(allowed_ids)
+    city_lookup["GeographyId"] = city_lookup["CITY_NAME"].map(
+        lambda value: geography_id("CITY", value)
+    )
+    summary = (
+        city_lookup.groupby("GeographyId", as_index=False)
+        .agg(
+            AllowedCount=("IsAllowed", "sum"),
+            TotalCount=("CO_TAZID", "count"),
+        )
+    )
+    _STATEWIDE_MASKED_CITY_IDS = {
+        geography_id
+        for geography_id, allowed_count, total_count in summary.itertuples(index=False)
+        if total_count > 0 and allowed_count == 0
+    }
+    return _STATEWIDE_MASKED_CITY_IDS
+
+
 def existing_metrics_are_current(
     manifest: dict | None, metrics_fingerprint: str
 ) -> bool:
@@ -715,6 +743,15 @@ def read_socio_data(model_area: str, scenario_year: int) -> pd.DataFrame:
             subarea_one, f"{SOCIO_JOB_COLUMN}_wf"
         ].fillna(statewide.loc[subarea_one, SOCIO_JOB_COLUMN])
         socio = statewide[["CO_TAZID", SOCIO_HH_COLUMN, SOCIO_JOB_COLUMN]].copy()
+        missing_wf = wf.loc[~wf["CO_TAZID"].isin(socio["CO_TAZID"])].copy()
+        if not missing_wf.empty:
+            socio = pd.concat(
+                [
+                    socio,
+                    missing_wf[["CO_TAZID", SOCIO_HH_COLUMN, SOCIO_JOB_COLUMN]],
+                ],
+                ignore_index=True,
+            )
     elif model_area == "Wasatch Front":
         socio = read_wf_socio_data(get_wf_socio_path(scenario_year))[
             ["CO_TAZID", SOCIO_HH_COLUMN, SOCIO_JOB_COLUMN]
@@ -1098,6 +1135,7 @@ def build_tile_features(
     ]
     total_metric_columns = get_total_metric_columns(metrics)
     statewide_allowed_ids = get_statewide_vmt_allowed_taz_ids()
+    statewide_masked_city_ids = get_statewide_masked_city_ids()
     area_frames = []
     join_columns = ["ModelArea", "GeographyType", "GeographyId"]
 
@@ -1165,11 +1203,19 @@ def build_tile_features(
                 how="inner",
                 validate="1:1",
             )
-            area_gdf["StatewideVmtMasked"] = (
-                (area_gdf["ModelArea"] == "Statewide")
-                & (area_gdf["GeographyType"] == "TAZ")
-                & (~area_gdf["CO_TAZID"].isin(statewide_allowed_ids))
-            ).astype("int8")
+            statewide_mask = (
+                (
+                    (area_gdf["ModelArea"] == "Statewide")
+                    & (area_gdf["GeographyType"] == "TAZ")
+                    & (~area_gdf["CO_TAZID"].isin(statewide_allowed_ids))
+                )
+                | (
+                    (area_gdf["ModelArea"] == "Statewide")
+                    & (area_gdf["GeographyType"] == "CITY")
+                    & (area_gdf["GeographyId"].isin(statewide_masked_city_ids))
+                )
+            )
+            area_gdf["StatewideVmtMasked"] = statewide_mask.astype("int8")
             area_frames.append(area_gdf)
 
     if not area_frames:

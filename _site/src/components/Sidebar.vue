@@ -121,7 +121,7 @@
         </button>
       </div>
       <div v-if="datasetMode === 'vmt'" class="geography-note">
-        Produced VMT is usually most useful Per HH, attracted VMT Per Job. HH Equiv = households + 0.55 jobs.
+        HH Equiv = households + 0.55 jobs.
       </div>
 
       <span v-if="datasetMode === 'vmt'" class="step-header">Step 6: Choose Purpose</span>

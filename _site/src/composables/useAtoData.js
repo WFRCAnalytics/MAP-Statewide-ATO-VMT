@@ -3,6 +3,17 @@ import { DATA_BASE_URL } from '../config/constants.js'
 let connection = null
 const manifestCache = {}
 
+function buildVersionToken(manifest) {
+  const build = manifest?.build ?? {}
+  return build.tiles_fingerprint ?? build.metrics_fingerprint ?? build.generated_at ?? null
+}
+
+function withVersionParam(path, versionToken) {
+  if (!versionToken) return `${DATA_BASE_URL}/${path}`
+  const separator = path.includes('?') ? '&' : '?'
+  return `${DATA_BASE_URL}/${path}${separator}v=${encodeURIComponent(versionToken)}`
+}
+
 async function getConnection() {
   if (connection) return connection
 
@@ -154,7 +165,7 @@ export function getAtoSelectionSummary(options) {
 export async function loadDataManifest(datasetId = 'ato') {
   if (manifestCache[datasetId]) return manifestCache[datasetId]
 
-  const response = await fetch(`${DATA_BASE_URL}/${datasetId}/manifest.json`)
+  const response = await fetch(`${DATA_BASE_URL}/${datasetId}/manifest.json`, { cache: 'no-store' })
   if (!response.ok) {
     throw new Error(`Failed to load ${datasetId.toUpperCase()} manifest: ${response.status}`)
   }
@@ -173,7 +184,7 @@ export async function loadDataRows({ datasetId = 'ato', scenarioYear, modelArea,
   }
 
   const conn = await getConnection()
-  const metricsUrl = `${DATA_BASE_URL}/${manifest.files.metrics}`
+  const metricsUrl = withVersionParam(manifest.files.metrics, buildVersionToken(manifest))
   const metricIdentifier = quoteIdentifier(metricColumn)
   const modelAreaSql = quoteString(modelArea)
   const geographyTypeSql = quoteString(geographyType)

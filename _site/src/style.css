@@ -558,7 +558,7 @@ h1, h2, h3, h4, h5 {
   border-radius: 8px;
   padding: 10px 18px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  pointer-events: none;
+  pointer-events: auto;
 }
 .legend-title {
   font-family: 'Oswald', sans-serif;
@@ -568,6 +568,26 @@ h1, h2, h3, h4, h5 {
   line-height: 20px;
   margin-bottom: 10px;
   margin-top: 0;
+}
+.legend-mode-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.legend-mode-button {
+  border: 1px solid #cfd7e0;
+  background: #ffffff;
+  color: #425466;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.legend-mode-button.active {
+  background: #233A57;
+  border-color: #233A57;
+  color: #ffffff;
 }
 .legend-items { display: flex; flex-direction: column; gap: 5px; }
 .legend-item { display: flex; align-items: center; gap: 5px; }
