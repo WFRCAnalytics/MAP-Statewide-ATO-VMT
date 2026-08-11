@@ -737,7 +737,7 @@ function metricColumnFor(target, mode) {
 }
 
 function defaultVmtRateForPa(pa) {
-  return pa === 'A' ? 'PER_JOB' : 'PER_HH'
+  return 'TOTAL'
 }
 
 function vmtMetricColumn(pa, period, purpose, rate = 'TOTAL') {
