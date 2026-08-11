@@ -1,0 +1,376 @@
+;-----------------------------------------------------------------------------------------
+;General Parameters
+
+;Highway Network Processing Factors
+    ;adjust speed and capacity for oneway couplets
+    OneWayBump_Spd = 1.05
+    OneWayBump_Cap = 1.20
+    
+    ;adjust capacity for center turn lane (TWLTL)
+    TL_CFAC_Art = 1.075    ;for arterials, add 7.5% capacity for center turn lane
+    TL_CFAC_Col = 1.120    ;for collectors, add 12% capacity for center turn lane
+    
+    ;adjust capacity for passing lane
+    PL_CFAC_Art = 1.05    ;for arterials & collectors, add 5% capacity for passing lane
+    
+    
+;Skim parameters (also used in Assignment)
+    ;intrazonal travel speed (mph)
+    IntraZonalSpeed = 20
+    
+    ;Value of time (cent/min)                     source: _Source - Med Income & Value of Time - 2022-07-06.xlsb
+    VOT_Auto_Per = 17       ;non-work trips
+    VOT_Auto_Wrk = 22       ;work trips (HBW)
+    VOT_Auto_Ext = 20       ;external
+    VOT_LT       = 37       ;light truck
+    VOT_MD       = 50       ;medium truck
+    VOT_HV       = 63       ;heavy truck
+      
+    VOT_Toll     = 50       ;all vehicles on tollway
+    VOT_HOT_DA   = 50       ;drive alone on HOT
+    
+    ;Vehicle operating cost (cent/mile)           source: 1-Auto Operating Cost - 2022-01-11.xlsx
+    AOC_Auto     = 21.7
+    AOC_LT       = 27.3
+    AOC_MD       = 55.5
+    AOC_HV       = 74.3
+    
+    ;ramp penalty
+    Ramp_Pen = 0.50
+    
+    ;Truck penalty (min/mile)
+    MDTRK_Pen_Exp = 0  ;0.35
+    MDTRK_Pen_Art = 0  ;0.70
+    MDTRK_Pen_Col = 0  ;1.05
+    
+    HVTRK_Pen_Exp = 0  ;0.37
+    HVTRK_Pen_Art = 0  ;0.75
+    HVTRK_Pen_Col = 0  ;1.12
+    
+    ;truck speed factor (slow down trucks on arterials and freeways)
+    Truck_Spd_Fac_Fwy = 0.925
+    Truck_Spd_Fac_Art = 0.850
+    
+    
+;Life Cycle parameters
+    ;life cycle population percentages (convert pop in age group to pop in life cycle)
+    BE_LC2_0to17  = 0.993
+    BE_LC2_18to64 = 0.664
+                         
+    IR_LC2_0to17  = 0.977
+    IR_LC2_18to64 = 0.515
+                         
+    TO_LC2_0to17  = 0.882
+    TO_LC2_18to64 = 0.727
+                         
+    SW_LC2_0to17  = 0.958
+    SW_LC2_18to64 = 0.658
+                         
+    UD_LC2_0to17  = 0.952
+    UD_LC2_18to64 = 0.624
+                         
+    WE_LC2_0to17  = 0.982
+    WE_LC2_18to64 = 0.606
+                         
+    DA_LC2_0to17  = 0.974
+    DA_LC2_18to64 = 0.711
+                         
+    SL_LC2_0to17  = 0.961
+    SL_LC2_18to64 = 0.525
+                         
+    UT_LC2_0to17  = 0.981
+    UT_LC2_18to64 = 0.659
+                         
+    CA_LC2_0to17  = 0.958
+    CA_LC2_18to64 = 0.614
+                         
+    DX_LC2_0to17  = 0.974
+    DX_LC2_18to64 = 0.623
+    
+    ;life cycle average household size (convert pop in life cycle to hh in life cycle)
+    BE_HHSize_LC1 = 1.86
+    BE_HHSize_LC2 = 4.21
+    BE_HHSize_LC3 = 2.41
+                        
+    IR_HHSize_LC1 = 2.06
+    IR_HHSize_LC2 = 4.15
+    IR_HHSize_LC3 = 1.89
+                        
+    TO_HHSize_LC1 = 1.84
+    TO_HHSize_LC2 = 4.78
+    TO_HHSize_LC3 = 1.75
+                        
+    SW_HHSize_LC1 = 1.87
+    SW_HHSize_LC2 = 4.70
+    SW_HHSize_LC3 = 1.78
+                        
+    UD_HHSize_LC1 = 1.95      ;balance of rural counties
+    UD_HHSize_LC2 = 4.91
+    UD_HHSize_LC3 = 1.61
+                        
+    WE_HHSize_LC1 = 1.88
+    WE_HHSize_LC2 = 4.53
+    WE_HHSize_LC3 = 1.81
+                        
+    DA_HHSize_LC1 = 2.14
+    DA_HHSize_LC2 = 4.68
+    DA_HHSize_LC3 = 2.33
+                        
+    SL_HHSize_LC1 = 1.86
+    SL_HHSize_LC2 = 4.44
+    SL_HHSize_LC3 = 1.81
+                        
+    UT_HHSize_LC1 = 2.11
+    UT_HHSize_LC2 = 4.75
+    UT_HHSize_LC3 = 2.21
+                        
+    CA_HHSize_LC1 = 1.91
+    CA_HHSize_LC2 = 4.49
+    CA_HHSize_LC3 = 1.85
+                        
+    DX_HHSize_LC1 = 1.81
+    DX_HHSize_LC2 = 4.36
+    DX_HHSize_LC3 = 2.01
+    
+
+;Household disaggregation information
+    ;regional median income
+    Reg_Median_Inc_UDOT  = 61913       ;source: _Source - Med Income Value of Time - 2022-07-06.xlsb
+    Reg_Median_Inc_WF    = 74946       ;source: _Source - Med Income Value of Time - 2022-07-06.xlsb
+    Reg_Median_Inc_Cache = 59040       ;source: _Source - Med Income Value of Time - 2022-07-06.xlsb
+    Reg_Median_Inc_Dixie = 59836       ;source: _Source - Med Income Value of Time - 2022-07-06.xlsb
+    Reg_Median_Inc_SuWs  = 96563       ;source: _Source - Med Income Value of Time - 2022-07-06.xlsb
+    Reg_Median_Inc_Iron  = 51808       ;source: _Source - Med Income Value of Time - 2022-07-06.xlsb
+
+
+;Auto ownership parameters
+    ;auto ownership 3+ car average veh ownership
+    AveNum3PlusCars = 3.47    ;of those who have more than 3 cars, what is the average number of cars? parameters for auto ownership
+    
+    
+;Mode Choice parameters
+    ;walk & bike speed
+    walkspeed = 2.5        ;miles per hour
+    bikespeed = 10         ;miles per hour
+    
+    ;School bus trip distance threshold in mile
+    SchoolbusDist = 1.75
+    
+    ;Below school bus distance
+    Schoolbus_LTCutoff = 0.0000
+    Drive_LTCutoff     = 0.0000
+    DropOff_LTCutoff   = 0.1500
+    Walk_LTCutoff      = 0.6660
+    Bike_LTCutoff      = 0.1840
+    
+    ;Beyond school bus distance
+    Schoolbus_GTCutoff = 0.7887
+    Drive_GTCutoff     = 0.0528
+    DropOff_GTCutoff   = 0.1585
+    Walk_GTCutoff      = 0.0000
+    Bike_GTCutoff      = 0.0000
+    
+    
+;Assignment parameters
+    ;diurnal factors
+    ;% of trips in period
+    HBW_AM_Pct   = 0.2746
+    HBW_MD_Pct   = 0.2225
+    HBW_PM_Pct   = 0.2680
+    HBW_EV_Pct   = 0.2349
+                
+    HBO_AM_Pct   = 0.0755
+    HBO_MD_Pct   = 0.3757
+    HBO_PM_Pct   = 0.2335
+    HBO_EV_Pct   = 0.3153
+                
+    NHB_AM_Pct   = 0.0641
+    NHB_MD_Pct   = 0.4678
+    NHB_PM_Pct   = 0.3059
+    NHB_EV_Pct   = 0.1622
+                
+    HBS_AM_Pct   = 0.3381
+    HBS_MD_Pct   = 0.3454
+    HBS_PM_Pct   = 0.2773
+    HBS_EV_Pct   = 0.0392
+                
+    HBC_AM_Pct   = 0.2837
+    HBC_MD_Pct   = 0.3331
+    HBC_PM_Pct   = 0.1509
+    HBC_EV_Pct   = 0.2323
+                
+    Rec_AM_Pct   = 0.0755
+    Rec_MD_Pct   = 0.3757
+    Rec_PM_Pct   = 0.2335
+    Rec_EV_Pct   = 0.3153
+                
+    Ext_AM_Pct   = 0.1236
+    Ext_MD_Pct   = 0.3789
+    Ext_PM_Pct   = 0.3088
+    Ext_EV_Pct   = 0.1887
+                
+    TR_AM_Pct    = 0.1590
+    TR_MD_Pct    = 0.3522
+    TR_PM_Pct    = 0.2274
+    TR_EV_Pct    = 0.2614
+                 
+    HBShp_AM_Pct = 0.0878
+    HBShp_MD_Pct = 0.3430
+    HBShp_PM_Pct = 0.2250
+    HBShp_EV_Pct = 0.3442
+                      
+    HBOth_AM_Pct = 0.0244
+    HBOth_MD_Pct = 0.5023
+    HBOth_PM_Pct = 0.2577
+    HBOth_EV_Pct = 0.2156
+                
+    NHBW_AM_Pct  = 0.1000
+    NHBW_MD_Pct  = 0.4610
+    NHBW_PM_Pct  = 0.3082
+    NHBW_EV_Pct  = 0.1308
+                
+    NHBNW_AM_Pct = 0.0532
+    NHBNW_MD_Pct = 0.4820   
+    NHBNW_PM_Pct = 0.2929   
+    NHBNW_EV_Pct = 0.1719   
+    
+    ;% of period trips in PA direction (remaining will be in the AP direction)
+    HBW_AM_PA    = 0.9301
+    HBW_MD_PA    = 0.5234
+    HBW_PM_PA    = 0.1311
+    HBW_EV_PA    = 0.3960
+          
+    HBO_AM_PA    = 0.7847
+    HBO_MD_PA    = 0.5568
+    HBO_PM_PA    = 0.4790
+    HBO_EV_PA    = 0.3796
+          
+    NHB_AM_PA    = 0.5000
+    NHB_MD_PA    = 0.5000
+    NHB_PM_PA    = 0.5000
+    NHB_EV_PA    = 0.5000
+                         
+    HBS_AM_PA    = 0.8493
+    HBS_MD_PA    = 0.4237
+    HBS_PM_PA    = 0.2127
+    HBS_EV_PA    = 0.1915
+                         
+    HBC_AM_PA    = 0.9803
+    HBC_MD_PA    = 0.4177
+    HBC_PM_PA    = 0.3344
+    HBC_EV_PA    = 0.1391
+                         
+    Rec_AM_PA    = 0.7847
+    Rec_MD_PA    = 0.5568
+    Rec_PM_PA    = 0.4790
+    Rec_EV_PA    = 0.3796
+                         
+    Ext_AM_PA    = 0.7262
+    Ext_MD_PA    = 0.5372
+    Ext_PM_PA    = 0.3270
+    Ext_EV_PA    = 0.5602
+                         
+    TR_AM_PA     = 0.5000
+    TR_MD_PA     = 0.5000
+    TR_PM_PA     = 0.5000
+    TR_EV_PA     = 0.5000
+                         
+    HBShp_AM_PA  = 0.7802
+    HBShp_MD_PA  = 0.5624
+    HBShp_PM_PA  = 0.5137
+    HBShp_EV_PA  = 0.3574
+                         
+    HBOth_AM_PA  = 0.7488
+    HBOth_MD_PA  = 0.5601
+    HBOth_PM_PA  = 0.3699
+    HBOth_EV_PA  = 0.4872
+                         
+    NHBW_AM_PA   = 0.4574
+    NHBW_MD_PA   = 0.4353
+    NHBW_PM_PA   = 0.5999
+    NHBW_EV_PA   = 0.5252
+                         
+    NHBNW_AM_PA  = 0.5000
+    NHBNW_MD_PA  = 0.5000
+    NHBNW_PM_PA  = 0.5000
+    NHBNW_EV_PA  = 0.5000
+
+    ;% PM trips in peak 1 hour
+    PM_1hr = 0.358
+    
+    
+    ;auto occupancy factors, updated 8/23/2022
+    VEH_OCCUPANCY_HBW   = 1.14 ;1.10
+    VEH_OCCUPANCY_HBO   = 1.70 ;1.71
+    VEH_OCCUPANCY_NHB   = 1.56
+    VEH_OCCUPANCY_HBSCH = 1.56 ;2.23
+    VEH_OCCUPANCY_HBC   = 1.12 ;1.17
+    VEH_OCCUPANCY_Rec   = 1.69
+                          
+    VEH_OCCUPANCY_HBSHP = 1.64 ;1.65
+    VEH_OCCUPANCY_HBOTH = 1.69 ;1.73
+    VEH_OCCUPANCY_NHBW  = 1.24 ;1.21
+    VEH_OCCUPANCY_NHBNW = 1.80 ;1.79
+    
+    VEH_OCCUPANCY_ExBUS = 1.17 ;1.36 
+    VEH_OCCUPANCY_ExOTH = 2.25 ;3.25 
+    VEH_OCCUPANCY_ExREC = 1.84 ;3.25 
+    
+    ;School bus party size
+    Schoolbus_VO = 70
+    
+    ;Average 3+ trip vehicle occupancy
+    AO3P_HBW     = 3.67 ;3.40
+    AO3P_HBO     = 3.78 ;3.70
+    AO3P_NHB     = 3.80 ;3.67
+    AO3P_HBSch   = 3.89 ;3.88
+    AO3P_HBC     = 3.24 ;3.28
+            
+    AO3P_HBShp   = 3.71 ;3.50
+    AO3P_HBOth   = 3.79 ;3.76
+    AO3P_NHBW    = 3.80 ;3.56
+    AO3P_NHBNW   = 3.80 ;3.69
+    
+
+;Future occupancy field structure, updated occupancies as of 8/23/2022
+    VehOcc_HBW		= 1.14
+    VehOcc_HBShp	= 1.64 
+    VehOcc_HBOth	= 1.69
+    VehOcc_HBSch	= 1.56
+    VehOcc_HBC		= 1.12
+    VehOcc_NHBW		= 1.24
+    VehOcc_NHBNW	= 1.80
+    VehOcc_Rec		= 1.69
+    VehOcc_HBO		= 1.68
+    VehOcc_NHB		= 1.60
+		
+    VehOcc_ExtWrk	= 1.17
+    VehOcc_ExtHBO	= 2.25
+    VehOcc_ExtNHB	= 1.84
+    VehOcc_ExtRec	= 1.84
+		
+    VehOcc_3p_HBW	= 3.67
+    VehOcc_3p_HBShp	= 3.71
+    VehOcc_3p_HBOth	= 3.79
+    VehOcc_3p_HBSch	= 3.89
+    VehOcc_3p_HBC	= 3.24
+    VehOcc_3p_NHBW	= 3.80
+    VehOcc_3p_NHBNW	= 3.80
+    VehOcc_3p_Rec	= 3.79
+    VehOcc_3p_HBO	= 3.78
+    VehOcc_3p_NHB	= 3.80
+    
+    ;Passenger Car Equivalency
+    PCE_MD = 1.5
+    PCE_HV = 2.0
+    
+    
+    ;intrazonal speed
+    IntrazonalSpeed = 20.0   ;assume 20 mph
+    
+    ;factor to slow down trucks on freeways
+    Truck_Speed_Fac = 0.85
+    
+;-----------------------------------------------------------------------------------------
+ 
+ 

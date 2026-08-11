@@ -1,0 +1,98 @@
+
+            ;identify demand matrices
+            FILEI MATI[01] = 'intermediate/temp_PA_VMT_@PeriodLp1@.mtx'
+            FILEI MATI[02] = 'intermediate/temp_AP_VMT_@PeriodLp1@.mtx'
+            
+            ; set zones
+            ZONES   = 9855
+            ZONEMSG = 10
+            
+            ;assign metric variable
+            Metric = 'VMT'
+            
+            
+            ;create production-based & attraction-based matrices
+            mw[101] = mi.1.HBW         + mi.2.HBW.T
+            mw[102] = mi.1.HBO         + mi.2.HBO.T
+            mw[103] = mi.1.NHB         + mi.2.NHB.T
+            mw[104] = mi.1.HBS         + mi.2.HBS.T
+            mw[105] = mi.1.HBC         + mi.2.HBC.T
+            mw[106] = mi.1.REC         + mi.2.REC.T
+            mw[107] = mi.1.Ext_Bus     + mi.2.Ext_Bus.T
+            mw[108] = mi.1.Ext_Oth     + mi.2.Ext_Oth.T
+            mw[109] = mi.1.Ext_Rec     + mi.2.Ext_Rec.T
+            mw[110] = mi.1.Ext_MD      + mi.2.Ext_MD.T
+            mw[111] = mi.1.SH_LT       + mi.2.SH_LT.T
+            mw[112] = mi.1.SH_MD       + mi.2.SH_MD.T
+            mw[113] = mi.1.SH_HV       + mi.2.SH_HV.T
+            mw[114] = mi.1.LH_MD       + mi.2.LH_MD.T
+            mw[115] = mi.1.LH_HV       + mi.2.LH_HV.T
+            
+            mw[151] = mi.1.HBW.T       + mi.2.HBW
+            mw[152] = mi.1.HBO.T       + mi.2.HBO
+            mw[153] = mi.1.NHB.T       + mi.2.NHB
+            mw[154] = mi.1.HBS.T       + mi.2.HBS
+            mw[155] = mi.1.HBC.T       + mi.2.HBC
+            mw[156] = mi.1.REC.T       + mi.2.REC
+            mw[157] = mi.1.Ext_Bus.T   + mi.2.Ext_Bus
+            mw[158] = mi.1.Ext_Oth.T   + mi.2.Ext_Oth
+            mw[159] = mi.1.Ext_Rec.T   + mi.2.Ext_Rec
+            mw[160] = mi.1.Ext_MD.T    + mi.2.Ext_MD
+            mw[161] = mi.1.SH_LT.T     + mi.2.SH_LT
+            mw[162] = mi.1.SH_MD.T     + mi.2.SH_MD
+            mw[163] = mi.1.SH_HV.T     + mi.2.SH_HV
+            mw[164] = mi.1.LH_MD.T     + mi.2.LH_MD
+            mw[165] = mi.1.LH_HV.T     + mi.2.LH_HV
+            
+            
+            ;calculate production-based & attraction-based metrics
+            P_HBW       = ROWSUM(101)
+            P_HBO       = ROWSUM(102)
+            P_NHB       = ROWSUM(103)
+            P_HBS       = ROWSUM(104)
+            P_HBC       = ROWSUM(105)
+            P_REC       = ROWSUM(106)
+            P_Ext_Bus   = ROWSUM(107)
+            P_Ext_Oth   = ROWSUM(108)
+            P_Ext_Rec   = ROWSUM(109)
+            P_Ext_MD    = ROWSUM(110)
+            P_SH_LT     = ROWSUM(111)
+            P_SH_MD     = ROWSUM(112)
+            P_SH_HV     = ROWSUM(113)
+            P_LH_MD     = ROWSUM(114)
+            P_LH_HV     = ROWSUM(115)
+            
+            A_HBW       = ROWSUM(151)
+            A_HBO       = ROWSUM(152)
+            A_NHB       = ROWSUM(153)
+            A_HBS       = ROWSUM(154)
+            A_HBC       = ROWSUM(155)
+            A_REC       = ROWSUM(156)
+            A_Ext_Bus   = ROWSUM(157)
+            A_Ext_Oth   = ROWSUM(158)
+            A_Ext_Rec   = ROWSUM(159)
+            A_Ext_MD    = ROWSUM(160)
+            A_SH_LT     = ROWSUM(161)
+            A_SH_MD     = ROWSUM(162)
+            A_SH_HV     = ROWSUM(163)
+            A_LH_MD     = ROWSUM(164)
+            A_LH_HV     = ROWSUM(165)
+            
+            ;Summarize totals for printing
+            ;Rec Total
+            P_REC_ALL = P_REC + P_Ext_Rec
+            A_REC_ALL = A_REC + A_Ext_Rec
+
+            ;MD Total
+            P_Tot_MD = P_SH_MD + P_LH_MD
+            A_Tot_MD = A_SH_MD + A_LH_MD
+
+            P_MD_ALL = P_Tot_MD + P_Ext_MD
+            A_MD_ALL = A_Tot_MD + A_Ext_MD
+
+            ;HV Total
+            P_Tot_HV = P_SH_HV + P_LH_HV
+            A_Tot_HV = A_SH_HV + A_LH_HV
+
+            ;total vehicle level metrics and print them to output csv
+            READ FILE = '_print_vehicles.block'

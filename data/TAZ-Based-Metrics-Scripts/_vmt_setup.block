@@ -1,0 +1,87 @@
+
+            ;identify demand matrices
+            FILEI MATI[01] = 'outputs/pa_OD_Veh_@PeriodLp1@.mtx'
+            FILEI MATI[02] = 'outputs/ap_OD_Veh_@PeriodLp1@.mtx'
+            
+            ;identify skims
+            FILEI MATI[11] = 'inputs/Skim_@PeriodLp1@.mtx'
+            
+            ;specify output matrices
+            FILEO MATO[01] = 'intermediate/temp_PA_VMT_@PeriodLp1@.mtx', 
+                mo=101-115,
+                name=HBW, HBO, NHB, HBS, HBC, REC,
+                     Ext_Bus, Ext_Oth, Ext_Rec, Ext_MD,
+                     SH_LT, SH_MD, SH_HV, LH_MD, LH_HV
+            
+            FILEO MATO[02] = 'intermediate/temp_AP_VMT_@PeriodLp1@.mtx', 
+                mo=151-165,
+                name=HBW, HBO, NHB, HBS, HBC, REC,
+                     Ext_Bus, Ext_Oth, Ext_Rec, Ext_MD,
+                     SH_LT, SH_MD, SH_HV, LH_MD, LH_HV
+            
+            ; set zones
+            ZONES   = 9855
+            ZONEMSG = 10
+            
+            ;assign metric variable
+            Metric = 'VMT'
+            
+
+            ;reassign 9999 skim values to 0 to prevent incorrect rowsums downstream
+            jloop
+                
+                mw[901][j] = mi.11.GP_Dist
+                if (mw[901][j]>=9999) mw[901][j] = 0
+                
+                mw[902][j] = mi.11.MD_Dist
+                if (mw[902][j]>=9999) mw[902][j] = 0
+                
+                mw[903][j] = mi.11.HV_Dist
+                if (mw[903][j]>=9999) mw[903][j] = 0
+                
+            endjloop
+
+            ;Assign demand input files to working matrices
+            ;PA --------------------------------------------------------------------------
+            ;Drive
+            mw[101] = mi.1.HBW       * mw[901]
+            mw[102] = mi.1.HBO       * mw[901]
+            mw[103] = mi.1.NHB       * mw[901]
+            mw[104] = mi.1.HBS       * mw[901]
+            mw[105] = mi.1.HBC       * mw[901]
+            mw[106] = mi.1.REC       * mw[901]
+            
+            ;Ext
+            mw[107] = mi.1.Ext_Bus   * mw[901]
+            mw[108] = mi.1.Ext_Oth   * mw[902]
+            mw[109] = mi.1.Ext_Rec   * mw[902]
+            mw[110] = mi.1.Ext_MD    * mw[902]
+            
+            ;Truck
+            mw[111] = mi.1.SH_LT     * mw[901]
+            mw[112] = mi.1.SH_MD     * mw[902]
+            mw[113] = mi.1.SH_HV     * mw[903]
+            mw[114] = mi.1.LH_MD     * mw[902]
+            mw[115] = mi.1.LH_HV     * mw[903]
+            
+            ;AP --------------------------------------------------------------------------
+            ;Drive
+            mw[151] = mi.2.HBW       * mw[901]
+            mw[152] = mi.2.HBO       * mw[901]
+            mw[153] = mi.2.NHB       * mw[901]
+            mw[154] = mi.2.HBS       * mw[901]
+            mw[155] = mi.2.HBC       * mw[901]
+            mw[156] = mi.2.REC       * mw[901]
+            
+            ;Ext
+            mw[157] = mi.2.Ext_Bus   * mw[901]
+            mw[158] = mi.2.Ext_Oth   * mw[902]
+            mw[159] = mi.2.Ext_Rec   * mw[902]
+            mw[160] = mi.2.Ext_MD    * mw[902]
+            
+            ;Truck
+            mw[161] = mi.2.SH_LT     * mw[901]
+            mw[162] = mi.2.SH_MD     * mw[902]
+            mw[163] = mi.2.SH_HV     * mw[903]
+            mw[164] = mi.2.LH_MD     * mw[902]
+            mw[165] = mi.2.LH_HV     * mw[903]
