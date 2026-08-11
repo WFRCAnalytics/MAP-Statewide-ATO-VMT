@@ -41,7 +41,7 @@ export const MODEL_AREAS = [
 ]
 export const GEOGRAPHY_LEVELS = [
   { label: 'TAZ', value: 'TAZ', icon: 'fa-draw-polygon' },
-  { label: 'City', value: 'CITY', icon: 'fa-city' },
+  { label: 'City Region', value: 'CITY', icon: 'fa-city' },
 ]
 
 export const ACCESS_TARGETS = [

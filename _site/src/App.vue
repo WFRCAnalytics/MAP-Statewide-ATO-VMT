@@ -780,7 +780,7 @@ function getVmtRateDescription(rateValue) {
 }
 
 function formatViewContext() {
-  const geographyLabel = geographyType.value === 'CITY' ? 'City Level' : 'TAZ Level'
+  const geographyLabel = geographyType.value === 'CITY' ? 'City Region Level' : 'TAZ Level'
   return `${geographyLabel}, ${scenarioYear.value}`
 }
 

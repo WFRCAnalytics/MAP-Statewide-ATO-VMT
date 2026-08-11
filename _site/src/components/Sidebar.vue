@@ -50,7 +50,7 @@
         </button>
       </div>
       <div v-if="datasetMode === 'ato' && geographyType === 'CITY'" class="geography-note">
-        City ATO values are simple averages of the included TAZ values.
+        City Region ATO values are simple averages of the included TAZ values.
       </div>
 
       <span v-if="datasetMode === 'ato'" class="step-header">Step 4: Choose Accessibility</span>
