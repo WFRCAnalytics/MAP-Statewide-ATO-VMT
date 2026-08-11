@@ -2,12 +2,12 @@ export const MAP_LAYER_DEFS = [
   {
     id: 'metric-fill',
     label: 'Metric Surface',
-    help: 'CO_TAZID thematic surface from the active ATO or VMT PMTiles archive.',
+    help: 'Thematic surface for the active ATO or VMT geography layer.',
   },
   {
     id: 'taz-outline',
-    label: 'TAZ Outlines',
-    help: 'Light TAZ boundary overlay styled to match the reference app.',
+    label: 'Geography Outline',
+    help: 'Light outline overlay for the active geography level.',
   },
   {
     id: 'major-roads',

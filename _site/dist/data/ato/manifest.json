@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10T21:52:38.382598+00:00",
+  "generated_at": "2026-08-10T23:04:54.199571+00:00",
   "dataset": "ato",
   "dataset_label": "ATO",
   "dataset_title": "Access to Opportunity",
@@ -10,6 +10,10 @@
     "Dixie",
     "Summit Wasatch",
     "Iron"
+  ],
+  "geography_types": [
+    "TAZ",
+    "CITY"
   ],
   "scenario_years": [
     2019,
@@ -58,7 +62,41 @@
     "HH_byWalk"
   ],
   "metric_ranges": {
-    "2019|Dixie": {
+    "2019|Dixie|CITY": {
+      "Job_byAuto": {
+        "min": 556.273,
+        "max": 67421.75
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 9176.429
+      },
+      "Job_byBike": {
+        "min": 25.714,
+        "max": 35018.536
+      },
+      "Job_byWalk": {
+        "min": 3.0,
+        "max": 2741.183
+      },
+      "HH_byAuto": {
+        "min": 953.636,
+        "max": 41265.652
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 3114.543
+      },
+      "HH_byBike": {
+        "min": 118.714,
+        "max": 15585.737
+      },
+      "HH_byWalk": {
+        "min": 17.7,
+        "max": 932.965
+      }
+    },
+    "2019|Dixie|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 80320.0
@@ -92,7 +130,41 @@
         "max": 2653.0
       }
     },
-    "2019|Iron": {
+    "2019|Iron|CITY": {
+      "Job_byAuto": {
+        "min": 2731.4,
+        "max": 22953.512
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 4986.281
+      },
+      "Job_byBike": {
+        "min": 153.0,
+        "max": 14097.083
+      },
+      "Job_byWalk": {
+        "min": 5.836,
+        "max": 1484.851
+      },
+      "HH_byAuto": {
+        "min": 2454.0,
+        "max": 15803.967
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 2233.975
+      },
+      "HH_byBike": {
+        "min": 68.4,
+        "max": 7772.76
+      },
+      "HH_byWalk": {
+        "min": 13.099,
+        "max": 689.0
+      }
+    },
+    "2019|Iron|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 23928.0
@@ -126,7 +198,41 @@
         "max": 1998.0
       }
     },
-    "2019|Statewide": {
+    "2019|Statewide|CITY": {
+      "Job_byAuto": {
+        "min": 88.0,
+        "max": 708129.373
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "Job_byBike": {
+        "min": 0.0,
+        "max": 214605.169
+      },
+      "Job_byWalk": {
+        "min": 0.0,
+        "max": 15377.245
+      },
+      "HH_byAuto": {
+        "min": 92.6,
+        "max": 307356.288
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "HH_byBike": {
+        "min": 2.0,
+        "max": 75493.627
+      },
+      "HH_byWalk": {
+        "min": 0.0,
+        "max": 3047.388
+      }
+    },
+    "2019|Statewide|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 754257.0
@@ -160,7 +266,41 @@
         "max": 8932.0
       }
     },
-    "2019|Summit Wasatch": {
+    "2019|Summit Wasatch|CITY": {
+      "Job_byAuto": {
+        "min": 7861.333,
+        "max": 40085.761
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 12004.391
+      },
+      "Job_byBike": {
+        "min": 32.0,
+        "max": 17799.196
+      },
+      "Job_byWalk": {
+        "min": 7.25,
+        "max": 2738.348
+      },
+      "HH_byAuto": {
+        "min": 3835.667,
+        "max": 16892.5
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 2580.739
+      },
+      "HH_byBike": {
+        "min": 219.667,
+        "max": 6592.134
+      },
+      "HH_byWalk": {
+        "min": 26.923,
+        "max": 868.254
+      }
+    },
+    "2019|Summit Wasatch|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 45269.0
@@ -194,7 +334,41 @@
         "max": 1542.0
       }
     },
-    "2019|Wasatch Front": {
+    "2019|Wasatch Front|CITY": {
+      "Job_byAuto": {
+        "min": 3516.5,
+        "max": 687453.305
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 201529.61
+      },
+      "Job_byBike": {
+        "min": 0.0,
+        "max": 214605.169
+      },
+      "Job_byWalk": {
+        "min": 0.0,
+        "max": 15377.245
+      },
+      "HH_byAuto": {
+        "min": 4874.0,
+        "max": 303013.288
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 69193.695
+      },
+      "HH_byBike": {
+        "min": 2.0,
+        "max": 75493.627
+      },
+      "HH_byWalk": {
+        "min": 0.0,
+        "max": 3047.388
+      }
+    },
+    "2019|Wasatch Front|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 766956.0
@@ -228,7 +402,41 @@
         "max": 8932.0
       }
     },
-    "2023|Cache": {
+    "2023|Cache|CITY": {
+      "Job_byAuto": {
+        "min": 21308.562,
+        "max": 74957.833
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 23501.985
+      },
+      "Job_byBike": {
+        "min": 53.438,
+        "max": 51288.833
+      },
+      "Job_byWalk": {
+        "min": 0.812,
+        "max": 4311.088
+      },
+      "HH_byAuto": {
+        "min": 11405.125,
+        "max": 40242.5
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 9362.936
+      },
+      "HH_byBike": {
+        "min": 305.75,
+        "max": 23224.25
+      },
+      "HH_byWalk": {
+        "min": 12.562,
+        "max": 1664.843
+      }
+    },
+    "2023|Cache|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 75718.0
@@ -262,7 +470,41 @@
         "max": 3619.0
       }
     },
-    "2023|Dixie": {
+    "2023|Dixie|CITY": {
+      "Job_byAuto": {
+        "min": 635.364,
+        "max": 73297.889
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 9478.066
+      },
+      "Job_byBike": {
+        "min": 30.429,
+        "max": 38118.291
+      },
+      "Job_byWalk": {
+        "min": 3.333,
+        "max": 2892.343
+      },
+      "HH_byAuto": {
+        "min": 1168.364,
+        "max": 48742.91
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 3535.619
+      },
+      "HH_byBike": {
+        "min": 144.857,
+        "max": 18198.235
+      },
+      "HH_byWalk": {
+        "min": 22.786,
+        "max": 1078.401
+      }
+    },
+    "2023|Dixie|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 87801.0
@@ -296,7 +538,41 @@
         "max": 2832.0
       }
     },
-    "2023|Iron": {
+    "2023|Iron|CITY": {
+      "Job_byAuto": {
+        "min": 2854.6,
+        "max": 25159.545
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 5420.983
+      },
+      "Job_byBike": {
+        "min": 166.0,
+        "max": 15408.455
+      },
+      "Job_byWalk": {
+        "min": 6.541,
+        "max": 1610.455
+      },
+      "HH_byAuto": {
+        "min": 2819.0,
+        "max": 18716.744
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 2532.793
+      },
+      "HH_byBike": {
+        "min": 80.6,
+        "max": 9025.041
+      },
+      "HH_byWalk": {
+        "min": 15.33,
+        "max": 778.868
+      }
+    },
+    "2023|Iron|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 26337.0
@@ -330,7 +606,41 @@
         "max": 2192.0
       }
     },
-    "2023|Statewide": {
+    "2023|Statewide|CITY": {
+      "Job_byAuto": {
+        "min": 95.0,
+        "max": 761456.593
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "Job_byBike": {
+        "min": 0.0,
+        "max": 228489.407
+      },
+      "Job_byWalk": {
+        "min": 0.0,
+        "max": 16260.664
+      },
+      "HH_byAuto": {
+        "min": 95.6,
+        "max": 326262.831
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "HH_byBike": {
+        "min": 2.0,
+        "max": 79784.678
+      },
+      "HH_byWalk": {
+        "min": 0.0,
+        "max": 3488.187
+      }
+    },
+    "2023|Statewide|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 816504.0
@@ -364,7 +674,41 @@
         "max": 10638.0
       }
     },
-    "2023|Summit Wasatch": {
+    "2023|Summit Wasatch|CITY": {
+      "Job_byAuto": {
+        "min": 7928.333,
+        "max": 42327.109
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 15515.413
+      },
+      "Job_byBike": {
+        "min": 34.0,
+        "max": 19312.652
+      },
+      "Job_byWalk": {
+        "min": 7.0,
+        "max": 3019.761
+      },
+      "HH_byAuto": {
+        "min": 4071.667,
+        "max": 18563.75
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 3809.0
+      },
+      "HH_byBike": {
+        "min": 216.333,
+        "max": 7522.239
+      },
+      "HH_byWalk": {
+        "min": 32.385,
+        "max": 973.328
+      }
+    },
+    "2023|Summit Wasatch|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 47727.0
@@ -398,7 +742,41 @@
         "max": 1720.0
       }
     },
-    "2023|Wasatch Front": {
+    "2023|Wasatch Front|CITY": {
+      "Job_byAuto": {
+        "min": 6297.0,
+        "max": 740672.102
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 202754.559
+      },
+      "Job_byBike": {
+        "min": 0.0,
+        "max": 228489.407
+      },
+      "Job_byWalk": {
+        "min": 0.0,
+        "max": 16260.664
+      },
+      "HH_byAuto": {
+        "min": 5553.0,
+        "max": 321996.305
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 66521.78
+      },
+      "HH_byBike": {
+        "min": 2.0,
+        "max": 79784.678
+      },
+      "HH_byWalk": {
+        "min": 0.0,
+        "max": 3488.187
+      }
+    },
+    "2023|Wasatch Front|TAZ": {
       "Job_byAuto": {
         "min": 4147.0,
         "max": 829933.0
@@ -432,7 +810,41 @@
         "max": 10638.0
       }
     },
-    "2028|Cache": {
+    "2028|Cache|CITY": {
+      "Job_byAuto": {
+        "min": 20684.758,
+        "max": 75308.637
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 24757.108
+      },
+      "Job_byBike": {
+        "min": 60.188,
+        "max": 53871.5
+      },
+      "Job_byWalk": {
+        "min": 0.875,
+        "max": 4590.902
+      },
+      "HH_byAuto": {
+        "min": 13284.812,
+        "max": 45903.583
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 10867.044
+      },
+      "HH_byBike": {
+        "min": 374.375,
+        "max": 28233.167
+      },
+      "HH_byWalk": {
+        "min": 13.688,
+        "max": 1943.059
+      }
+    },
+    "2028|Cache|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 80885.0
@@ -466,7 +878,41 @@
         "max": 4066.0
       }
     },
-    "2028|Dixie": {
+    "2028|Dixie|CITY": {
+      "Job_byAuto": {
+        "min": 736.182,
+        "max": 87722.502
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 10343.17
+      },
+      "Job_byBike": {
+        "min": 35.857,
+        "max": 42646.965
+      },
+      "Job_byWalk": {
+        "min": 4.0,
+        "max": 3161.048
+      },
+      "HH_byAuto": {
+        "min": 1461.727,
+        "max": 62011.997
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 4044.294
+      },
+      "HH_byBike": {
+        "min": 183.571,
+        "max": 21474.855
+      },
+      "HH_byWalk": {
+        "min": 30.093,
+        "max": 1251.201
+      }
+    },
+    "2028|Dixie|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 100368.0
@@ -500,7 +946,41 @@
         "max": 3099.0
       }
     },
-    "2028|Iron": {
+    "2028|Iron|CITY": {
+      "Job_byAuto": {
+        "min": 3047.8,
+        "max": 27224.95
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 5774.298
+      },
+      "Job_byBike": {
+        "min": 179.0,
+        "max": 16629.512
+      },
+      "Job_byWalk": {
+        "min": 7.197,
+        "max": 1728.562
+      },
+      "HH_byAuto": {
+        "min": 3237.0,
+        "max": 22043.802
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 2677.264
+      },
+      "HH_byBike": {
+        "min": 94.0,
+        "max": 10239.826
+      },
+      "HH_byWalk": {
+        "min": 17.945,
+        "max": 841.579
+      }
+    },
+    "2028|Iron|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 28584.0
@@ -534,7 +1014,41 @@
         "max": 2287.0
       }
     },
-    "2028|Statewide": {
+    "2028|Statewide|CITY": {
+      "Job_byAuto": {
+        "min": 95.0,
+        "max": 791002.475
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "Job_byBike": {
+        "min": 0.0,
+        "max": 237408.661
+      },
+      "Job_byWalk": {
+        "min": 0.0,
+        "max": 17823.609
+      },
+      "HH_byAuto": {
+        "min": 98.0,
+        "max": 350415.932
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "HH_byBike": {
+        "min": 2.0,
+        "max": 86340.102
+      },
+      "HH_byWalk": {
+        "min": 0.0,
+        "max": 4065.287
+      }
+    },
+    "2028|Statewide|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 857322.0
@@ -568,7 +1082,41 @@
         "max": 12109.0
       }
     },
-    "2028|Summit Wasatch": {
+    "2028|Summit Wasatch|CITY": {
+      "Job_byAuto": {
+        "min": 8315.667,
+        "max": 45793.848
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 17297.0
+      },
+      "Job_byBike": {
+        "min": 37.0,
+        "max": 21302.717
+      },
+      "Job_byWalk": {
+        "min": 7.333,
+        "max": 3332.478
+      },
+      "HH_byAuto": {
+        "min": 4459.0,
+        "max": 20772.25
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 4230.043
+      },
+      "HH_byBike": {
+        "min": 199.0,
+        "max": 8889.448
+      },
+      "HH_byWalk": {
+        "min": 40.231,
+        "max": 1126.478
+      }
+    },
+    "2028|Summit Wasatch|TAZ": {
       "Job_byAuto": {
         "min": 0.0,
         "max": 51560.0
@@ -602,7 +1150,41 @@
         "max": 1967.0
       }
     },
-    "2028|Wasatch Front": {
+    "2028|Wasatch Front|CITY": {
+      "Job_byAuto": {
+        "min": 6491.0,
+        "max": 770174.153
+      },
+      "Job_byTran": {
+        "min": 0.0,
+        "max": 221671.017
+      },
+      "Job_byBike": {
+        "min": 0.0,
+        "max": 237408.661
+      },
+      "Job_byWalk": {
+        "min": 0.0,
+        "max": 17823.609
+      },
+      "HH_byAuto": {
+        "min": 6158.0,
+        "max": 346722.22
+      },
+      "HH_byTran": {
+        "min": 0.0,
+        "max": 77329.746
+      },
+      "HH_byBike": {
+        "min": 2.0,
+        "max": 86340.102
+      },
+      "HH_byWalk": {
+        "min": 0.0,
+        "max": 4065.287
+      }
+    },
+    "2028|Wasatch Front|TAZ": {
       "Job_byAuto": {
         "min": 2424.0,
         "max": 843921.0
@@ -638,35 +1220,52 @@
     }
   },
   "record_counts": {
-    "2019|Dixie": 868,
-    "2019|Iron": 360,
-    "2019|Statewide": 9815,
-    "2019|Summit Wasatch": 593,
-    "2019|Wasatch Front": 3468,
-    "2023|Cache": 949,
-    "2023|Dixie": 868,
-    "2023|Iron": 360,
-    "2023|Statewide": 9815,
-    "2023|Summit Wasatch": 593,
-    "2023|Wasatch Front": 3468,
-    "2028|Cache": 943,
-    "2028|Dixie": 868,
-    "2028|Iron": 360,
-    "2028|Statewide": 9815,
-    "2028|Summit Wasatch": 593,
-    "2028|Wasatch Front": 3468
+    "2019|Dixie|CITY": 16,
+    "2019|Dixie|TAZ": 868,
+    "2019|Iron|CITY": 9,
+    "2019|Iron|TAZ": 360,
+    "2019|Statewide|CITY": 316,
+    "2019|Statewide|TAZ": 9815,
+    "2019|Summit Wasatch|CITY": 15,
+    "2019|Summit Wasatch|TAZ": 593,
+    "2019|Wasatch Front|CITY": 103,
+    "2019|Wasatch Front|TAZ": 3468,
+    "2023|Cache|CITY": 21,
+    "2023|Cache|TAZ": 949,
+    "2023|Dixie|CITY": 16,
+    "2023|Dixie|TAZ": 868,
+    "2023|Iron|CITY": 9,
+    "2023|Iron|TAZ": 360,
+    "2023|Statewide|CITY": 316,
+    "2023|Statewide|TAZ": 9815,
+    "2023|Summit Wasatch|CITY": 15,
+    "2023|Summit Wasatch|TAZ": 593,
+    "2023|Wasatch Front|CITY": 103,
+    "2023|Wasatch Front|TAZ": 3468,
+    "2028|Cache|CITY": 20,
+    "2028|Cache|TAZ": 943,
+    "2028|Dixie|CITY": 16,
+    "2028|Dixie|TAZ": 868,
+    "2028|Iron|CITY": 9,
+    "2028|Iron|TAZ": 360,
+    "2028|Statewide|CITY": 316,
+    "2028|Statewide|TAZ": 9815,
+    "2028|Summit Wasatch|CITY": 15,
+    "2028|Summit Wasatch|TAZ": 593,
+    "2028|Wasatch Front|CITY": 103,
+    "2028|Wasatch Front|TAZ": 3468
   },
   "bounds": [
-    -114.05280297187916,
+    -114.05284818341698,
     36.99765748027139,
-    -109.0417845699252,
+    -109.04157178176531,
     42.00170207959738
   ],
   "model_area_bounds": {
     "Statewide": [
-      -114.05280297187916,
+      -114.05284818341698,
       36.99765748027139,
-      -109.0417845699252,
+      -109.04157178176531,
       42.00170207959738
     ],
     "Wasatch Front": [
@@ -682,7 +1281,7 @@
       41.999553994784634
     ],
     "Dixie": [
-      -114.05280297187916,
+      -114.05284818341698,
       36.99995857709036,
       -112.89907354976138,
       37.61828901761399
@@ -701,12 +1300,100 @@
     ]
   },
   "model_area_feature_counts": {
-    "Statewide": 9815,
-    "Wasatch Front": 3468,
-    "Cache": 943,
-    "Dixie": 868,
-    "Summit Wasatch": 593,
-    "Iron": 360
+    "Statewide": 10131,
+    "Wasatch Front": 3571,
+    "Cache": 963,
+    "Dixie": 884,
+    "Summit Wasatch": 608,
+    "Iron": 369
+  },
+  "model_area_geography_bounds": {
+    "Statewide|TAZ": [
+      -114.05280297187916,
+      36.99765748027139,
+      -109.0417845699252,
+      42.00170207959738
+    ],
+    "Statewide|CITY": [
+      -114.05284818341698,
+      36.99765748027139,
+      -109.04157178176531,
+      42.00170207959738
+    ],
+    "Wasatch Front|TAZ": [
+      -112.25847100324647,
+      39.81202994629839,
+      -111.42300305152382,
+      41.607077381751864
+    ],
+    "Wasatch Front|CITY": [
+      -112.25847100324647,
+      39.81202994629839,
+      -111.42300305152382,
+      41.607077381751864
+    ],
+    "Cache|TAZ": [
+      -112.1661075219941,
+      41.36881615073432,
+      -111.4015237451368,
+      41.999553994784634
+    ],
+    "Cache|CITY": [
+      -112.16576981300396,
+      41.36881615073432,
+      -111.4015237451368,
+      41.999553994784634
+    ],
+    "Dixie|TAZ": [
+      -114.05280297187916,
+      36.99995857709036,
+      -112.89907354976138,
+      37.61828901761399
+    ],
+    "Dixie|CITY": [
+      -114.05284818341698,
+      36.99998481729586,
+      -112.89907846488742,
+      37.61828901761399
+    ],
+    "Summit Wasatch|TAZ": [
+      -111.6491287296899,
+      39.899654197615284,
+      -109.99899093445956,
+      41.25162932312471
+    ],
+    "Summit Wasatch|CITY": [
+      -111.6491287296899,
+      39.899654197615284,
+      -109.99899093445956,
+      41.25162932312471
+    ],
+    "Iron|TAZ": [
+      -114.0523499918645,
+      37.47429800067204,
+      -112.46700988487184,
+      38.148762871479086
+    ],
+    "Iron|CITY": [
+      -114.0523499918645,
+      37.47429800067204,
+      -112.46700988487184,
+      38.148762871479086
+    ]
+  },
+  "model_area_geography_feature_counts": {
+    "Statewide|TAZ": 9815,
+    "Statewide|CITY": 316,
+    "Wasatch Front|TAZ": 3468,
+    "Wasatch Front|CITY": 103,
+    "Cache|TAZ": 943,
+    "Cache|CITY": 20,
+    "Dixie|TAZ": 868,
+    "Dixie|CITY": 16,
+    "Summit Wasatch|TAZ": 593,
+    "Summit Wasatch|CITY": 15,
+    "Iron|TAZ": 360,
+    "Iron|CITY": 9
   },
   "files": {
     "metrics": "ato/ato_metrics.parquet",
@@ -717,8 +1404,8 @@
     "source_layer": "ato_taz",
     "minzoom": 0,
     "maxzoom": 10,
-    "feature_model": "wide_taz_by_model_area_and_year",
-    "feature_count": 16047,
+    "feature_model": "wide_geography_by_model_area_year",
+    "feature_count": 16526,
     "simplify_tolerance": 0.00071,
     "property_template": "y{ScenarioYear}_{MetricColumn}",
     "availability_property_template": "y{ScenarioYear}_{MetricColumn}_has"
@@ -727,8 +1414,8 @@
     "source_layer": "ato_taz_boundary",
     "minzoom": 0,
     "maxzoom": 11,
-    "feature_count": 16047,
+    "feature_count": 16526,
     "simplify_tolerance": 0.00015,
-    "simplification_method": "per_taz_boundary"
+    "simplification_method": "per_geography_boundary"
   }
 }

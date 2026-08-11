@@ -11,6 +11,7 @@ Depends only on `pipeline.config` and `pipeline.io_utils` - not on
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -51,6 +52,14 @@ METRIC_COLUMNS = [
     "HH_byBike",
     "HH_byWalk",
 ]
+GEOGRAPHY_TYPES = ["TAZ", "CITY"]
+GEOGRAPHY_LABELS = {
+    "TAZ": "TAZ",
+    "CITY": "City",
+}
+GEOGRAPHY_SOURCE_COLUMNS = {
+    "CITY": "CITY_NAME",
+}
 
 PMTILES_LAYER_NAME = "ato_taz"
 BOUNDARY_PMTILES_LAYER_NAME = "ato_taz_boundary"
@@ -121,7 +130,32 @@ def validate_raw_inputs() -> pd.DataFrame:
     return pd.DataFrame(records)
 
 
-def read_ato_metrics() -> pd.DataFrame:
+def normalize_geography_name(value: object, geography_type: str) -> str:
+    text = str(value or "").strip()
+    if not text or text.lower() == "nan":
+        return f"Unknown {GEOGRAPHY_LABELS[geography_type]}"
+    return re.sub(r"\s+", " ", text)
+
+
+def geography_id(geography_type: str, geography_name: str) -> str:
+    if geography_type == "TAZ":
+        return geography_name
+    return f"{geography_type}|{geography_name}"
+
+
+def read_geography_lookup() -> pd.DataFrame:
+    lookup = read_taz_geometries(
+        0,
+        extra_columns=["CITY_NAME"],
+    )[["CO_TAZID", "CITY_NAME"]].copy()
+    lookup["CO_TAZID"] = lookup["CO_TAZID"].astype("int32")
+    lookup["CITY_NAME"] = lookup["CITY_NAME"].map(
+        lambda value: normalize_geography_name(value, "CITY")
+    )
+    return lookup.drop_duplicates(subset=["CO_TAZID"])
+
+
+def read_ato_taz_metrics() -> pd.DataFrame:
     frames = []
     for config in MODEL_AREA_CONFIGS:
         model_area = config["name"]
@@ -152,18 +186,81 @@ def read_ato_metrics() -> pd.DataFrame:
 
     metrics = pd.concat(frames, ignore_index=True)
     metrics["ScenarioYear"] = metrics["ScenarioYear"].astype("int16")
-    metrics["SA_TAZID"] = metrics["SA_TAZID"].astype("int32")
-    metrics["CO_TAZID"] = metrics["CO_TAZID"].astype("int32")
+    metrics["SA_TAZID"] = pd.to_numeric(
+        metrics["SA_TAZID"], errors="coerce"
+    ).fillna(0).astype("int32")
+    metrics["CO_TAZID"] = pd.to_numeric(
+        metrics["CO_TAZID"], errors="coerce"
+    ).fillna(0).astype("int32")
 
     for column in METRIC_COLUMNS:
         metrics[column] = pd.to_numeric(metrics[column], errors="coerce").fillna(0)
 
+    metrics["GeographyType"] = "TAZ"
+    metrics["GeographyId"] = metrics["CO_TAZID"].astype(str)
+    metrics["GeographyName"] = metrics["CO_TAZID"].astype(str)
+    return metrics
+
+
+def aggregate_metrics_by_geography(
+    taz_metrics: pd.DataFrame,
+    lookup: pd.DataFrame,
+    geography_type: str,
+) -> pd.DataFrame:
+    source_column = GEOGRAPHY_SOURCE_COLUMNS[geography_type]
+    merged = taz_metrics.merge(lookup, on="CO_TAZID", how="left", validate="m:1")
+    merged["GeographyType"] = geography_type
+    merged["GeographyName"] = merged[source_column].map(
+        lambda value: normalize_geography_name(value, geography_type)
+    )
+    merged["GeographyId"] = merged["GeographyName"].map(
+        lambda value: geography_id(geography_type, value)
+    )
+
+    aggregated = (
+        merged.groupby(
+            ["ScenarioYear", "ModelArea", "GeographyType", "GeographyId"],
+            as_index=False,
+        )
+        .agg(
+            GeographyName=("GeographyName", "first"),
+            **{column: (column, "mean") for column in METRIC_COLUMNS},
+        )
+        .round(3)
+    )
+    aggregated["SA_TAZID"] = pd.Series(pd.NA, index=aggregated.index, dtype="Int64")
+    aggregated["CO_TAZID"] = pd.Series(pd.NA, index=aggregated.index, dtype="Int64")
+    return aggregated[
+        [
+            "ScenarioYear",
+            "ModelArea",
+            "GeographyType",
+            "GeographyId",
+            "GeographyName",
+            "SA_TAZID",
+            "CO_TAZID",
+            *METRIC_COLUMNS,
+        ]
+    ]
+
+
+def read_ato_metrics() -> pd.DataFrame:
+    lookup = read_geography_lookup()
+    taz_metrics = read_ato_taz_metrics()
+    geography_frames = [taz_metrics]
+    for geography_type in ("CITY",):
+        geography_frames.append(
+            aggregate_metrics_by_geography(taz_metrics, lookup, geography_type)
+        )
+
+    metrics = pd.concat(geography_frames, ignore_index=True)
+    metrics["ScenarioYear"] = metrics["ScenarioYear"].astype("int16")
     return metrics
 
 
 def add_normalized_metric_columns(metrics: pd.DataFrame) -> pd.DataFrame:
     metrics = metrics.copy()
-    group_columns = ["ScenarioYear", "ModelArea"]
+    group_columns = ["ScenarioYear", "ModelArea", "GeographyType"]
 
     for column in METRIC_COLUMNS:
         normal_column = f"{column}_norm"
@@ -179,57 +276,138 @@ def add_normalized_metric_columns(metrics: pd.DataFrame) -> pd.DataFrame:
     return metrics
 
 
+def dissolve_geography(
+    area_taz: gpd.GeoDataFrame,
+    geography_type: str,
+) -> gpd.GeoDataFrame:
+    if geography_type == "TAZ":
+        taz = area_taz[["CO_TAZID", "geometry"]].copy()
+        taz["GeographyType"] = "TAZ"
+        taz["GeographyId"] = taz["CO_TAZID"].astype(str)
+        taz["GeographyName"] = taz["CO_TAZID"].astype(str)
+        return taz[["GeographyType", "GeographyId", "GeographyName", "CO_TAZID", "geometry"]]
+
+    source_column = GEOGRAPHY_SOURCE_COLUMNS[geography_type]
+    dissolved = area_taz[[source_column, "geometry"]].copy()
+    dissolved["GeographyName"] = dissolved[source_column].map(
+        lambda value: normalize_geography_name(value, geography_type)
+    )
+    dissolved["GeographyId"] = dissolved["GeographyName"].map(
+        lambda value: geography_id(geography_type, value)
+    )
+    dissolved = dissolved.dissolve(by="GeographyId", as_index=False, aggfunc="first")
+    dissolved["GeographyType"] = geography_type
+    dissolved["CO_TAZID"] = pd.Series(pd.NA, index=dissolved.index, dtype="Int64")
+    return dissolved[
+        ["GeographyType", "GeographyId", "GeographyName", "CO_TAZID", "geometry"]
+    ]
+
+
+def build_geography_geometries(
+    simplify_tolerance: float,
+    metrics: pd.DataFrame,
+) -> gpd.GeoDataFrame:
+    base = read_taz_geometries(
+        0,
+        extra_columns=["CITY_NAME"],
+    )
+    base["CITY_NAME"] = base["CITY_NAME"].map(
+        lambda value: normalize_geography_name(value, "CITY")
+    )
+
+    taz_rows = metrics.loc[metrics["GeographyType"] == "TAZ", ["ModelArea", "CO_TAZID"]]
+    area_frames = []
+    for model_area in MODEL_AREA_ORDER:
+        area_ids = sorted(
+            {
+                int(value)
+                for value in taz_rows.loc[taz_rows["ModelArea"] == model_area, "CO_TAZID"]
+                .dropna()
+                .astype(int)
+                .tolist()
+            }
+        )
+        if not area_ids:
+            continue
+
+        area_taz = base.loc[base["CO_TAZID"].isin(area_ids)].copy()
+        for geography_type in GEOGRAPHY_TYPES:
+            geography_gdf = dissolve_geography(area_taz, geography_type)
+            geography_gdf["geometry"] = geography_gdf.geometry.simplify(
+                simplify_tolerance,
+                preserve_topology=True,
+            )
+            geography_gdf["ModelArea"] = model_area
+            area_frames.append(geography_gdf)
+
+    return gpd.GeoDataFrame(
+        pd.concat(area_frames, ignore_index=True),
+        geometry="geometry",
+        crs=base.crs,
+    )
+
+
 def build_tile_features(
     metrics: pd.DataFrame,
     geometries: gpd.GeoDataFrame,
     warn_missing: bool = True,
 ) -> gpd.GeoDataFrame:
     metrics = add_normalized_metric_columns(metrics)
-    geometry_ids = set(geometries["CO_TAZID"].astype("int32"))
     area_frames = []
+    join_columns = ["ModelArea", "GeographyType", "GeographyId"]
 
     for model_area in MODEL_AREA_ORDER:
-        area_metrics = metrics.loc[metrics["ModelArea"] == model_area].copy()
-        if area_metrics.empty:
-            continue
+        for geography_type in GEOGRAPHY_TYPES:
+            area_metrics = metrics.loc[
+                (metrics["ModelArea"] == model_area)
+                & (metrics["GeographyType"] == geography_type)
+            ].copy()
+            if area_metrics.empty:
+                continue
 
-        wide = (
-            area_metrics[["CO_TAZID"]]
-            .drop_duplicates()
-            .set_index("CO_TAZID")
-            .sort_index()
-        )
-        wide["ModelArea"] = model_area
-
-        for scenario_year in sorted(area_metrics["ScenarioYear"].dropna().unique()):
-            year_metrics = (
-                area_metrics.loc[area_metrics["ScenarioYear"] == scenario_year]
-                .set_index("CO_TAZID")
+            wide = (
+                area_metrics[join_columns]
+                .drop_duplicates(subset=join_columns)
+                .set_index(join_columns)
                 .sort_index()
             )
-            for column in METRIC_COLUMNS:
-                value_column = f"y{int(scenario_year)}_{column}"
-                normal_column = f"{value_column}_norm"
-                available_column = f"{value_column}_has"
-                wide[value_column] = year_metrics[column]
-                wide[normal_column] = year_metrics[f"{column}_norm"]
-                wide[available_column] = year_metrics[column].notna().astype("int8")
 
-        missing_ids = sorted(set(wide.index.astype("int32")) - geometry_ids)
-        if warn_missing and missing_ids:
-            sample = ", ".join(str(value) for value in missing_ids[:6])
-            print(
-                f"Warning: {model_area} has {len(missing_ids):,} CO_TAZID values "
-                f"without statewide TAZ geometry ({sample})"
+            for scenario_year in sorted(area_metrics["ScenarioYear"].dropna().unique()):
+                year_metrics = (
+                    area_metrics.loc[area_metrics["ScenarioYear"] == scenario_year]
+                    .set_index(join_columns)
+                    .sort_index()
+                )
+                for column in METRIC_COLUMNS:
+                    value_column = f"y{int(scenario_year)}_{column}"
+                    normal_column = f"{value_column}_norm"
+                    available_column = f"{value_column}_has"
+                    wide[value_column] = year_metrics[column]
+                    wide[normal_column] = year_metrics[f"{column}_norm"]
+                    wide[available_column] = year_metrics[column].notna().astype("int8")
+
+            area_geometry = geometries.loc[
+                (geometries["ModelArea"] == model_area)
+                & (geometries["GeographyType"] == geography_type)
+            ].copy()
+
+            missing_ids = sorted(
+                set(wide.reset_index()["GeographyId"]) - set(area_geometry["GeographyId"])
             )
+            if warn_missing and missing_ids:
+                sample = ", ".join(str(value) for value in missing_ids[:6])
+                print(
+                    f"Warning: {model_area} {geography_type} has "
+                    f"{len(missing_ids):,} geography values without geometry ({sample})"
+                )
 
-        area_gdf = geometries.merge(
-            wide.reset_index(),
-            on="CO_TAZID",
-            how="inner",
-            validate="1:1",
-        )
-        area_frames.append(area_gdf)
+            area_gdf = area_geometry.merge(
+                wide.reset_index(),
+                on=join_columns,
+                how="inner",
+                validate="1:1",
+            )
+            area_frames.append(area_gdf)
 
     if not area_frames:
         raise ValueError("No ATO tile features could be built.")
@@ -264,12 +442,12 @@ def build_manifest(metrics: pd.DataFrame, tile_gdf: gpd.GeoDataFrame) -> dict:
             int(year) for year in group["ScenarioYear"].dropna().unique()
         )
 
-    for (scenario_year, model_area), group in metrics.groupby(
-        ["ScenarioYear", "ModelArea"],
+    for (scenario_year, model_area, geography_type), group in metrics.groupby(
+        ["ScenarioYear", "ModelArea", "GeographyType"],
         sort=True,
     ):
-        key = f"{int(scenario_year)}|{model_area}"
-        record_counts[key] = int(group["CO_TAZID"].nunique())
+        key = f"{int(scenario_year)}|{model_area}|{geography_type}"
+        record_counts[key] = int(group["GeographyId"].nunique())
         ranges[key] = {}
         for column in METRIC_COLUMNS:
             ranges[key][column] = {
@@ -280,12 +458,24 @@ def build_manifest(metrics: pd.DataFrame, tile_gdf: gpd.GeoDataFrame) -> dict:
     bounds = [float(value) for value in tile_gdf.total_bounds]
     model_area_bounds = {}
     model_area_feature_counts = {}
+    model_area_geography_bounds = {}
+    model_area_geography_feature_counts = {}
     for model_area in MODEL_AREA_ORDER:
         group = tile_gdf.loc[tile_gdf["ModelArea"] == model_area]
         if group.empty:
             continue
         model_area_bounds[model_area] = [float(value) for value in group.total_bounds]
         model_area_feature_counts[model_area] = int(len(group))
+
+        for geography_type in GEOGRAPHY_TYPES:
+            area_geo = group.loc[group["GeographyType"] == geography_type]
+            if area_geo.empty:
+                continue
+            geo_key = f"{model_area}|{geography_type}"
+            model_area_geography_bounds[geo_key] = [
+                float(value) for value in area_geo.total_bounds
+            ]
+            model_area_geography_feature_counts[geo_key] = int(len(area_geo))
 
     model_areas = [
         model_area
@@ -299,6 +489,7 @@ def build_manifest(metrics: pd.DataFrame, tile_gdf: gpd.GeoDataFrame) -> dict:
         "dataset_label": "ATO",
         "dataset_title": "Access to Opportunity",
         "model_areas": model_areas,
+        "geography_types": GEOGRAPHY_TYPES,
         "scenario_years": sorted(
             int(year) for year in metrics["ScenarioYear"].dropna().unique()
         ),
@@ -309,6 +500,8 @@ def build_manifest(metrics: pd.DataFrame, tile_gdf: gpd.GeoDataFrame) -> dict:
         "bounds": bounds,
         "model_area_bounds": model_area_bounds,
         "model_area_feature_counts": model_area_feature_counts,
+        "model_area_geography_bounds": model_area_geography_bounds,
+        "model_area_geography_feature_counts": model_area_geography_feature_counts,
         "files": {
             "metrics": f"ato/{METRICS_FILENAME}",
             "pmtiles": f"ato/{FILL_PMTILES_FILENAME}",
@@ -318,7 +511,7 @@ def build_manifest(metrics: pd.DataFrame, tile_gdf: gpd.GeoDataFrame) -> dict:
             "source_layer": PMTILES_LAYER_NAME,
             "minzoom": PMTILES_MINZOOM,
             "maxzoom": PMTILES_MAXZOOM,
-            "feature_model": "wide_taz_by_model_area_and_year",
+            "feature_model": "wide_geography_by_model_area_year",
             "feature_count": int(len(tile_gdf)),
             "simplify_tolerance": TAZ_FILL_SIMPLIFY_TOLERANCE,
             "property_template": "y{ScenarioYear}_{MetricColumn}",
@@ -330,7 +523,7 @@ def build_manifest(metrics: pd.DataFrame, tile_gdf: gpd.GeoDataFrame) -> dict:
             "maxzoom": BOUNDARY_PMTILES_MAXZOOM,
             "feature_count": None,
             "simplify_tolerance": TAZ_BOUNDARY_SIMPLIFY_TOLERANCE,
-            "simplification_method": "per_taz_boundary",
+            "simplification_method": "per_geography_boundary",
         },
     }
 
@@ -355,7 +548,6 @@ def copy_web_assets() -> None:
                 raise
             print(f"Warning: kept existing locked web file: {target_path}")
 
-    # Cleanup of a previous, pre-rename ("ustm_*") artifact naming scheme.
     for obsolete in [
         PROCESSED_DIR / "ustm_metrics.parquet",
         PROCESSED_DIR / "ustm_ato_taz.pmtiles",
@@ -374,8 +566,10 @@ def build_processed_assets() -> dict:
     validate_raw_inputs()
 
     metrics = read_ato_metrics()
-    fill_geometries = read_taz_geometries(TAZ_FILL_SIMPLIFY_TOLERANCE)
-    boundary_geometries = read_taz_geometries(TAZ_BOUNDARY_SIMPLIFY_TOLERANCE)
+    fill_geometries = build_geography_geometries(TAZ_FILL_SIMPLIFY_TOLERANCE, metrics)
+    boundary_geometries = build_geography_geometries(
+        TAZ_BOUNDARY_SIMPLIFY_TOLERANCE, metrics
+    )
     tile_gdf = build_tile_features(metrics, fill_geometries)
     boundary_tile_gdf = build_tile_features(
         metrics, boundary_geometries, warn_missing=False
@@ -389,7 +583,7 @@ def build_processed_assets() -> dict:
         SCRATCH_DIR,
         PMTILES_LAYER_NAME,
         PMTILES_MAXZOOM,
-        "Access to Opportunity by model area TAZ",
+        "Access to Opportunity by model area geography",
     )
     create_pmtiles(
         boundary_gdf,
@@ -397,7 +591,7 @@ def build_processed_assets() -> dict:
         SCRATCH_DIR,
         BOUNDARY_PMTILES_LAYER_NAME,
         BOUNDARY_PMTILES_MAXZOOM,
-        "Access to Opportunity TAZ boundaries",
+        "Access to Opportunity geography boundaries",
     )
 
     manifest = build_manifest(metrics, tile_gdf)

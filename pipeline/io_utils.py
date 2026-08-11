@@ -52,12 +52,18 @@ def write_parquet(df: pd.DataFrame, output_path: Path) -> None:
             safe_unlink(temp_path)
 
 
-def read_taz_geometries(simplify_tolerance: float) -> gpd.GeoDataFrame:
+def read_taz_geometries(
+    simplify_tolerance: float,
+    extra_columns: list[str] | None = None,
+) -> gpd.GeoDataFrame:
     if not TAZ_PATH.exists():
         raise FileNotFoundError(TAZ_PATH)
 
+    extra_columns = extra_columns or []
+    keep_columns = ["CO_TAZID", *extra_columns, "geometry"]
+
     gdf = gpd.read_file(TAZ_PATH)
-    gdf = gdf[["CO_TAZID", "geometry"]].copy()
+    gdf = gdf[keep_columns].copy()
     gdf = gdf.dropna(subset=["CO_TAZID", "geometry"])
     gdf = gdf[~gdf.geometry.is_empty].copy()
     gdf["CO_TAZID"] = gdf["CO_TAZID"].astype("int32")
@@ -73,12 +79,15 @@ def read_taz_geometries(simplify_tolerance: float) -> gpd.GeoDataFrame:
         preserve_topology=True,
     )
 
-    return gdf[["CO_TAZID", "geometry"]].copy()
+    return gdf[keep_columns].copy()
 
 
 def build_boundary_features(geometries: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     keep_columns = [
         "ModelArea",
+        "GeographyType",
+        "GeographyId",
+        "GeographyName",
         "CO_TAZID",
         *[column for column in geometries.columns if column.endswith("_has")],
         "geometry",

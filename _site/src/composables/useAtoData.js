@@ -85,8 +85,8 @@ export function getAtoMetricAvailabilityProperty(scenarioYear, metricColumn) {
   return getMetricAvailabilityProperty(scenarioYear, metricColumn)
 }
 
-export function getMetricRange(manifest, scenarioYear, modelArea, metricColumn) {
-  const groupedRange = manifest.metric_ranges?.[`${Number(scenarioYear)}|${modelArea}`]?.[metricColumn]
+export function getMetricRange(manifest, scenarioYear, modelArea, geographyType, metricColumn) {
+  const groupedRange = manifest.metric_ranges?.[`${Number(scenarioYear)}|${modelArea}|${geographyType}`]?.[metricColumn]
   return {
     minValue: Number(groupedRange?.min ?? 0),
     maxValue: Number(groupedRange?.max ?? 0),
@@ -94,19 +94,20 @@ export function getMetricRange(manifest, scenarioYear, modelArea, metricColumn) 
   }
 }
 
-export function getAtoMetricRange(manifest, scenarioYear, modelArea, metricColumn) {
-  return getMetricRange(manifest, scenarioYear, modelArea, metricColumn)
+export function getAtoMetricRange(manifest, scenarioYear, modelArea, geographyType, metricColumn) {
+  return getMetricRange(manifest, scenarioYear, modelArea, geographyType, metricColumn)
 }
 
-export function hasMetricData(manifest, scenarioYear, modelArea, metricColumn) {
+export function hasMetricData(manifest, scenarioYear, modelArea, geographyType, metricColumn) {
   const { maxValue, hasRange } = getMetricRange(
     manifest,
     scenarioYear,
     modelArea,
+    geographyType,
     metricColumn,
   )
   const recordCount = Number(
-    manifest.record_counts?.[`${Number(scenarioYear)}|${modelArea}`] ?? 0,
+    manifest.record_counts?.[`${Number(scenarioYear)}|${modelArea}|${geographyType}`] ?? 0,
   )
 
   return hasRange
@@ -116,19 +117,20 @@ export function hasMetricData(manifest, scenarioYear, modelArea, metricColumn) {
     && Boolean(manifest.files?.pmtiles)
 }
 
-export function hasAtoMetricData(manifest, scenarioYear, modelArea, metricColumn) {
-  return hasMetricData(manifest, scenarioYear, modelArea, metricColumn)
+export function hasAtoMetricData(manifest, scenarioYear, modelArea, geographyType, metricColumn) {
+  return hasMetricData(manifest, scenarioYear, modelArea, geographyType, metricColumn)
 }
 
-export function getSelectionSummary({ manifest, scenarioYear, modelArea, metricColumn }) {
+export function getSelectionSummary({ manifest, scenarioYear, modelArea, geographyType, metricColumn }) {
   const { minValue, maxValue, hasRange } = getMetricRange(
     manifest,
     scenarioYear,
     modelArea,
+    geographyType,
     metricColumn,
   )
   const recordCount = Number(
-    manifest.record_counts?.[`${Number(scenarioYear)}|${modelArea}`]
+    manifest.record_counts?.[`${Number(scenarioYear)}|${modelArea}|${geographyType}`]
       ?? manifest.pmtiles?.feature_count
       ?? 0,
   )
@@ -164,7 +166,7 @@ export async function loadAtoManifest() {
   return loadDataManifest('ato')
 }
 
-export async function loadDataRows({ datasetId = 'ato', scenarioYear, modelArea, metricColumn }) {
+export async function loadDataRows({ datasetId = 'ato', scenarioYear, modelArea, geographyType, metricColumn }) {
   const manifest = await loadDataManifest(datasetId)
   if (!manifest.metrics.includes(metricColumn)) {
     throw new Error(`Metric ${metricColumn} is not listed in the ${datasetId.toUpperCase()} manifest`)
@@ -174,23 +176,28 @@ export async function loadDataRows({ datasetId = 'ato', scenarioYear, modelArea,
   const metricsUrl = `${DATA_BASE_URL}/${manifest.files.metrics}`
   const metricIdentifier = quoteIdentifier(metricColumn)
   const modelAreaSql = quoteString(modelArea)
+  const geographyTypeSql = quoteString(geographyType)
   const idColumns = datasetId === 'ato' ? '"SA_TAZID",' : ''
 
   const table = await conn.query(`
     SELECT
       "ScenarioYear",
       "ModelArea",
+      "GeographyType",
+      "GeographyId",
+      "GeographyName",
       ${idColumns}
       "CO_TAZID",
       CAST(${metricIdentifier} AS DOUBLE) AS metric_value
     FROM read_parquet('${metricsUrl}')
     WHERE "ScenarioYear" = ${Number(scenarioYear)}
       AND "ModelArea" = '${modelAreaSql}'
-    ORDER BY "CO_TAZID"
+      AND "GeographyType" = '${geographyTypeSql}'
+    ORDER BY "GeographyName", "GeographyId"
   `)
 
   const rows = tableToRows(table)
-  const { minValue, maxValue } = getMetricRange(manifest, scenarioYear, modelArea, metricColumn)
+  const { minValue, maxValue } = getMetricRange(manifest, scenarioYear, modelArea, geographyType, metricColumn)
   const spread = maxValue - minValue
 
   for (const row of rows) {

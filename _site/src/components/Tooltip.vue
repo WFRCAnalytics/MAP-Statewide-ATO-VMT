@@ -3,7 +3,7 @@
     <div id="pinned-tooltip-container" v-if="pinned">
       <div id="pinned-tooltip-header">
         <i class="fa-solid fa-thumbtack"></i>
-        <span>TAZ Details</span>
+        <span>{{ geographyLabel }} Details</span>
       </div>
       <div id="pinned-tooltip-content" v-html="pinnedContent || placeholder"></div>
     </div>
@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
 import { getMetricProperty } from '../composables/useAtoData.js'
 
@@ -19,17 +19,25 @@ const props = defineProps({
   map: { type: Object, required: true },
   pinned: { type: Boolean, default: false },
   datasetMode: { type: String, default: 'ato' },
+  geographyType: { type: String, default: 'TAZ' },
   modelArea: { type: String, required: true },
   scenarioYear: { type: Number, required: true },
   activeColumn: { type: String, required: true },
   metricLabel: { type: String, required: true },
-  metricRowsByTaz: { type: Object, default: null },
+  metricRowsByGeography: { type: Object, default: null },
 })
 
 const emit = defineEmits(['feature-hover'])
 
 const pinnedContent = ref('')
-const placeholder = '<div class="tooltip-placeholder"><i class="fa-solid fa-hand-pointer"></i><br>Hover over a TAZ</div>'
+const geographyLabel = computed(() => (
+  props.geographyType === 'CITY'
+    ? 'City'
+    : 'TAZ'
+))
+const placeholder = computed(() => (
+  `<div class="tooltip-placeholder"><i class="fa-solid fa-hand-pointer"></i><br>Hover over a ${geographyLabel.value}</div>`
+))
 const hoverLayers = ['ato-taz-fill', 'ato-taz-extrusion', 'vmt-taz-fill', 'vmt-taz-extrusion']
 
 let popup = null
@@ -53,16 +61,43 @@ function escapeHTML(value) {
   })[character])
 }
 
+function isMaskedStatewideVmt(properties) {
+  return props.datasetMode === 'vmt'
+    && (properties.ModelArea ?? props.modelArea) === 'Statewide'
+    && Number(properties.StatewideVmtMasked ?? 0) === 1
+}
+
 function buildHTML(properties) {
-  const tazId = properties.CO_TAZID ?? properties.co_tazid ?? properties.tazid ?? 'Unknown'
+  const geographyName = properties.GeographyName
+    ?? properties.geographyname
+    ?? properties.CO_TAZID
+    ?? properties.co_tazid
+    ?? properties.tazid
+    ?? 'Unknown'
   const value = properties[getMetricProperty(props.scenarioYear, props.activeColumn)]
     ?? properties[props.activeColumn]
     ?? properties.access_value
   const modelArea = properties.ModelArea ?? props.modelArea
+
+  if (isMaskedStatewideVmt(properties)) {
+    return `
+      <div class="tooltip-card">
+        <div class="tooltip-card-header">
+          <span>${escapeHTML(geographyLabel.value)} ${escapeHTML(geographyName)}</span>
+          <small>${escapeHTML(modelArea)}</small>
+        </div>
+        <div class="tooltip-card-row">
+          <span>${props.scenarioYear} ${escapeHTML(props.metricLabel)}</span>
+          <strong>Coming Soon</strong>
+        </div>
+      </div>
+    `
+  }
+
   return `
     <div class="tooltip-card">
       <div class="tooltip-card-header">
-        <span>CO_TAZID ${escapeHTML(tazId)}</span>
+        <span>${escapeHTML(geographyLabel.value)} ${escapeHTML(geographyName)}</span>
         <small>${escapeHTML(modelArea)}</small>
       </div>
       <div class="tooltip-card-row">
@@ -73,19 +108,22 @@ function buildHTML(properties) {
   `
 }
 
-function getTazId(properties) {
-  const value = properties.CO_TAZID ?? properties.co_tazid ?? properties.tazid
-  const number = Number(value)
-  return Number.isFinite(number) ? number : null
+function getGeographyId(properties) {
+  const value = properties.GeographyId
+    ?? properties.geographyid
+    ?? properties.CO_TAZID
+    ?? properties.co_tazid
+    ?? properties.tazid
+  return value == null ? null : String(value)
 }
 
 function enrichProperties(properties) {
   if (props.datasetMode !== 'vmt') return properties
 
-  const tazId = getTazId(properties)
-  if (tazId == null) return properties
+  const geographyId = getGeographyId(properties)
+  if (geographyId == null) return properties
 
-  const metricProperties = props.metricRowsByTaz?.get?.(tazId)
+  const metricProperties = props.metricRowsByGeography?.get?.(geographyId)
   return metricProperties ? { ...properties, ...metricProperties } : properties
 }
 
@@ -154,12 +192,12 @@ watch(
     () => props.scenarioYear,
     () => props.activeColumn,
     () => props.metricLabel,
-    () => props.metricRowsByTaz,
+    () => props.metricRowsByGeography,
   ],
   refreshPinnedContent,
 )
 
-watch([() => props.modelArea, () => props.datasetMode], () => {
+watch([() => props.modelArea, () => props.datasetMode, () => props.geographyType], () => {
   lastProperties = null
   pinnedContent.value = ''
   emit('feature-hover', null)

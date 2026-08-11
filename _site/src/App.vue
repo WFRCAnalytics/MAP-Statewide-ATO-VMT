@@ -14,6 +14,8 @@
       :model-areas="modelAreas"
       :scenario-year="scenarioYear"
       :model-area="modelArea"
+      :geography-type="geographyType"
+      :geography-levels="GEOGRAPHY_LEVELS"
       :disabled-model-areas="disabledModelAreas"
       :access-target="accessTarget"
       :travel-mode="travelMode"
@@ -34,6 +36,7 @@
       @update:datasetMode="onDatasetModeChange"
       @update:scenarioYear="scenarioYear = $event"
       @update:modelArea="modelArea = $event"
+      @update:geographyType="geographyType = $event"
       @update:accessTarget="onAccessTargetChange"
       @update:travelMode="onTravelModeChange"
       @update:vmtPa="onVmtPaChange"
@@ -56,17 +59,22 @@
         @update:opacity="onOpacityChange"
         @update:pinnedTooltip="pinnedTooltip = $event"
       />
+      <div class="active-metric-description">
+        <div class="active-metric-description-label">Current View</div>
+        <div class="active-metric-description-text">{{ activeMetricDescription }}</div>
+      </div>
       <div id="map"></div>
       <Tooltip
         v-if="mapReady"
         :map="mapInstance"
         :pinned="pinnedTooltip"
         :dataset-mode="datasetMode"
+        :geography-type="geographyType"
         :model-area="modelArea"
         :scenario-year="scenarioYear"
         :active-column="activeColumn"
         :metric-label="activeMetricLabel"
-        :metric-rows-by-taz="activeMetricRowsByTaz"
+        :metric-rows-by-geography="activeMetricRowsByGeography"
         @feature-hover="activeTazProperties = $event"
       />
       <Legend
@@ -118,6 +126,7 @@ import {
   ACCESS_TARGETS,
   DATASETS,
   DATA_BASE_URL,
+  GEOGRAPHY_LEVELS,
   MODEL_AREAS,
   SCENARIO_YEARS,
   TRAVEL_MODES,
@@ -144,6 +153,7 @@ import {
 
 const logoUrl = `${import.meta.env.BASE_URL}logo.png`
 const DATASET_IDS = DATASETS.map((dataset) => dataset.value)
+const GEOGRAPHY_TYPE_IDS = GEOGRAPHY_LEVELS.map((level) => level.value)
 const ACCESS_TARGET_IDS = ACCESS_TARGETS.map((target) => target.value)
 const TRAVEL_MODE_IDS = TRAVEL_MODES.map((mode) => mode.value)
 const VMT_PA_IDS = VMT_PA_OPTIONS.map((option) => option.value)
@@ -183,11 +193,13 @@ function parseUrlState() {
   const pitch = parseNumberParam(params.get('pitch'))
   const exaggeration = parseNumberParam(params.get('exaggeration'))
   const interaction = params.get('interaction')
+  const geographyType = params.get('geography')
 
   return {
     datasetMode: DATASET_IDS.includes(dataset) ? dataset : null,
     scenarioYear: Number.isInteger(year) ? year : null,
     modelArea: params.get('area'),
+    geographyType: GEOGRAPHY_TYPE_IDS.includes(geographyType) ? geographyType : null,
     accessTarget: ACCESS_TARGET_IDS.includes(params.get('target')) ? params.get('target') : null,
     travelMode: TRAVEL_MODE_IDS.includes(params.get('mode')) ? params.get('mode') : null,
     vmtPa: VMT_PA_IDS.includes(params.get('pa')) ? params.get('pa') : null,
@@ -221,6 +233,7 @@ const hasInitialMapView = Boolean(initialUrlState.mapView)
 const datasetMode = ref(initialUrlState.datasetMode ?? 'ato')
 const scenarioYear = ref(initialUrlState.scenarioYear ?? SCENARIO_YEARS[1])
 const modelArea = ref(initialUrlState.modelArea ?? MODEL_AREAS[0])
+const geographyType = ref(initialUrlState.geographyType ?? 'TAZ')
 const accessTarget = ref(initialUrlState.accessTarget ?? 'Job')
 const travelMode = ref(initialUrlState.travelMode ?? 'Auto')
 const vmtPa = ref(initialUrlState.vmtPa ?? 'P')
@@ -243,7 +256,7 @@ const minValue = ref(0)
 const maxValue = ref(0)
 const selectedRows = ref([])
 const activeTazProperties = ref(null)
-const activeMetricRowsByTaz = ref(new Map())
+const activeMetricRowsByGeography = ref(new Map())
 const manifests = reactive({
   ato: null,
   vmt: null,
@@ -290,6 +303,13 @@ const activeMetricLabel = computed(() => {
   const target = ACCESS_TARGETS.find((item) => item.value === accessTarget.value)
   const mode = TRAVEL_MODES.find((item) => item.value === travelMode.value)
   return `${target?.label ?? accessTarget.value} by ${mode?.label ?? travelMode.value}`
+})
+const activeMetricDescription = computed(() => {
+  if (datasetMode.value === 'vmt') {
+    return buildVmtDescription()
+  }
+
+  return buildAtoDescription()
 })
 const activePalette = computed(() => (
   datasetMode.value === 'vmt' ? VMT_PALETTE : ACCESS_PALETTE
@@ -405,6 +425,7 @@ function syncUrlState() {
   params.set('dataset', datasetMode.value)
   params.set('year', String(scenarioYear.value))
   params.set('area', modelArea.value)
+  params.set('geography', geographyType.value)
   params.set('opacity', fillOpacity.value.toFixed(2))
   params.set('exaggeration', extrusionExaggeration.value.toFixed(2))
   params.set('interaction', interactionMode.value)
@@ -628,6 +649,10 @@ async function loadManifestOptions() {
     if (!modelAreas.value.includes(modelArea.value)) {
       modelArea.value = modelAreas.value[0]
     }
+    const availableGeographyTypes = activeManifest.value?.geography_types ?? GEOGRAPHY_TYPE_IDS
+    if (!availableGeographyTypes.includes(geographyType.value)) {
+      geographyType.value = availableGeographyTypes[0] ?? 'TAZ'
+    }
     ensureAvailableMetricSelection()
   } catch (error) {
     console.error('Failed to load data manifests:', error)
@@ -642,6 +667,58 @@ function vmtMetricColumn(pa, period, purpose) {
   return `${pa}_${period}_${purpose}`
 }
 
+function buildAtoDescription() {
+  const targetLabel = accessTarget.value === 'HH' ? 'Households' : 'Jobs'
+  const modeLabel = {
+    Auto: 'a typical auto commute',
+    Tran: 'transit',
+    Walk: 'walking',
+    Bike: 'biking',
+  }[travelMode.value] ?? travelMode.value.toLowerCase()
+
+  if (travelMode.value === 'Auto') {
+    return `${targetLabel} within ${modeLabel}.`
+  }
+
+  return `${targetLabel} reachable by ${modeLabel}.`
+}
+
+function buildVmtDescription() {
+  const directionLabel = vmtPa.value === 'A' ? 'attracted to' : 'produced by'
+  const purposeDescription = getVmtPurposeDescription(vmtPurpose.value, vmtPurposeGroup.value)
+  return `Vehicle miles traveled ${directionLabel} ${purposeDescription}.`
+}
+
+function getVmtPurposeDescription(purposeValue, purposeGroupValue) {
+  const purposeDescriptions = {
+    PERSON_ALL: 'all household trips',
+    HBC: 'home-based change trips',
+    HBS_Pr: 'home-based shopping and personal trips',
+    HBS_Sc: 'home-based school trips',
+    HBS: 'home-based social and recreational trips',
+    HBW: 'home-based work trips',
+    NHB: 'non-home-based trips',
+    HBO: 'other home-based trips',
+    TRUCK_ALL: 'all truck trips',
+    LT: 'light truck trips',
+    MD: 'medium truck trips',
+    HV: 'heavy truck trips',
+    OTHER_ALL: 'other trips',
+  }
+
+  if (purposeDescriptions[purposeValue]) {
+    return purposeDescriptions[purposeValue]
+  }
+
+  const purposeGroupDescriptions = {
+    PERSON: 'household trips',
+    TRUCK: 'truck trips',
+    OTHER: 'other trips',
+  }
+
+  return purposeGroupDescriptions[purposeGroupValue] ?? 'selected trips'
+}
+
 function metricHasData(metricColumn, datasetId = datasetMode.value) {
   const manifest = manifests[datasetId]
   if (!manifest) return true
@@ -650,6 +727,7 @@ function metricHasData(metricColumn, datasetId = datasetMode.value) {
     manifest,
     scenarioYear.value,
     modelArea.value,
+    geographyType.value,
     metricColumn,
   )
 }
@@ -757,6 +835,19 @@ function addRoadLayers(map, cartoSource, firstLabelId) {
 
 function buildMetricColorExpression() {
   const normalizedColumn = `${activeMetricProperty.value}_norm`
+  const maskExpression = ['==', ['to-number', ['coalesce', ['get', 'StatewideVmtMasked'], 0]], 1]
+
+  if (datasetMode.value === 'vmt' && modelArea.value === 'Statewide') {
+    return [
+      'case',
+      maskExpression,
+      '#ffffff',
+      ['has', normalizedColumn],
+      buildColorRampExpression(['to-number', ['get', normalizedColumn]]),
+      '#d9d9d9',
+    ]
+  }
+
   return [
     'case',
     ['has', normalizedColumn],
@@ -792,13 +883,18 @@ function buildExtrusionExpression() {
 }
 
 function buildModelAreaFilter() {
-  return ['==', ['get', 'ModelArea'], modelArea.value]
+  return [
+    'all',
+    ['==', ['get', 'ModelArea'], modelArea.value],
+    ['==', ['get', 'GeographyType'], geographyType.value],
+  ]
 }
 
 function buildMetricFilter() {
   return [
     'all',
     ['==', ['get', 'ModelArea'], modelArea.value],
+    ['==', ['get', 'GeographyType'], geographyType.value],
     ['==', ['to-number', ['coalesce', ['get', activeMetricAvailabilityProperty.value], 0]], 1],
   ]
 }
@@ -825,18 +921,19 @@ function refreshDataLayer({ fit = false } = {}) {
       manifest,
       scenarioYear: scenarioYear.value,
       modelArea: modelArea.value,
+      geographyType: geographyType.value,
       metricColumn: activeColumn.value,
     })
 
     selectedRows.value = []
-    activeMetricRowsByTaz.value = new Map()
+    activeMetricRowsByGeography.value = new Map()
     const requestId = ++vmtRowsRequestId
     recordCount.value = result.recordCount
     minValue.value = result.minValue
     maxValue.value = result.maxValue
     hasData.value = result.hasData
     if (datasetMode.value === 'vmt' && result.hasData) {
-      loadActiveVmtRowsByTaz(requestId)
+      loadActiveVmtRowsByGeography(requestId)
     }
     refreshStyleExpressions()
     setExtentBounds(getSelectionBounds() ?? getManifestBounds())
@@ -847,7 +944,7 @@ function refreshDataLayer({ fit = false } = {}) {
   } catch (error) {
     console.error('Failed to refresh data layer:', error)
     selectedRows.value = []
-    activeMetricRowsByTaz.value = new Map()
+    activeMetricRowsByGeography.value = new Map()
     vmtRowsRequestId += 1
     recordCount.value = 0
     minValue.value = 0
@@ -856,7 +953,7 @@ function refreshDataLayer({ fit = false } = {}) {
   }
 }
 
-async function loadActiveVmtRowsByTaz(requestId) {
+async function loadActiveVmtRowsByGeography(requestId) {
   try {
     const years = activeModelScenarioYears.value.length
       ? activeModelScenarioYears.value
@@ -866,21 +963,25 @@ async function loadActiveVmtRowsByTaz(requestId) {
         datasetId: 'vmt',
         scenarioYear: year,
         modelArea: modelArea.value,
+        geographyType: geographyType.value,
         metricColumn: activeColumn.value,
       })),
     )
-    const rowsByTaz = new Map()
+    const rowsByGeography = new Map()
 
     for (const result of results) {
       for (const row of result.rows) {
-        const tazId = Number(row.CO_TAZID)
-        if (!Number.isFinite(tazId)) continue
+        const geographyId = String(row.GeographyId ?? row.CO_TAZID ?? '')
+        if (!geographyId) continue
 
         const rowScenarioYear = Number(row.ScenarioYear)
         const valueProperty = getMetricProperty(rowScenarioYear, activeColumn.value)
         const availabilityProperty = getMetricAvailabilityProperty(rowScenarioYear, activeColumn.value)
-        const existing = rowsByTaz.get(tazId) ?? {
-          CO_TAZID: tazId,
+        const existing = rowsByGeography.get(geographyId) ?? {
+          GeographyId: geographyId,
+          GeographyName: row.GeographyName ?? geographyId,
+          GeographyType: row.GeographyType ?? geographyType.value,
+          CO_TAZID: row.CO_TAZID,
           ModelArea: row.ModelArea ?? modelArea.value,
         }
 
@@ -891,12 +992,12 @@ async function loadActiveVmtRowsByTaz(requestId) {
           existing.access_value = row.access_value
           existing[activeColumn.value] = row.metric_value
         }
-        rowsByTaz.set(tazId, existing)
+        rowsByGeography.set(geographyId, existing)
       }
     }
 
     if (requestId === vmtRowsRequestId) {
-      activeMetricRowsByTaz.value = rowsByTaz
+      activeMetricRowsByGeography.value = rowsByGeography
     }
   } catch (error) {
     console.warn('Failed to load VMT hover values:', error)
@@ -912,7 +1013,9 @@ function getManifestBounds() {
 }
 
 function getSelectionBounds() {
-  const bounds = activeManifest.value?.model_area_bounds?.[modelArea.value]
+  const geographyKey = `${modelArea.value}|${geographyType.value}`
+  const bounds = activeManifest.value?.model_area_geography_bounds?.[geographyKey]
+    ?? activeManifest.value?.model_area_bounds?.[modelArea.value]
   if (!Array.isArray(bounds) || bounds.length !== 4) return getManifestBounds()
   const [minLng, minLat, maxLng, maxLat] = bounds.map(Number)
   if (![minLng, minLat, maxLng, maxLat].every(Number.isFinite)) return getManifestBounds()
@@ -1063,14 +1166,26 @@ async function onDownload() {
       datasetId: datasetMode.value,
       scenarioYear: scenarioYear.value,
       modelArea: modelArea.value,
+      geographyType: geographyType.value,
       metricColumn: activeColumn.value,
     })
     const rows = result.rows
     selectedRows.value = rows
 
-    const columns = datasetMode.value === 'ato'
-      ? ['ScenarioYear', 'ModelArea', 'SA_TAZID', 'CO_TAZID', activeColumn.value, 'access_value']
-      : ['ScenarioYear', 'ModelArea', 'CO_TAZID', activeColumn.value, 'access_value']
+    const columns = [
+      'ScenarioYear',
+      'ModelArea',
+      'GeographyType',
+      'GeographyName',
+      'GeographyId',
+      ...(geographyType.value === 'TAZ'
+        ? datasetMode.value === 'ato'
+          ? ['SA_TAZID', 'CO_TAZID']
+          : ['CO_TAZID']
+        : []),
+      activeColumn.value,
+      'access_value',
+    ]
     const header = columns.join(',')
     const body = rows
       .map((row) => columns.map((column) => (
@@ -1081,7 +1196,7 @@ async function onDownload() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `${datasetMode.value.toUpperCase()}_${modelArea.value.replace(/[^A-Za-z0-9]+/g, '_')}_${scenarioYear.value}_${activeColumn.value}.csv`
+    link.download = `${datasetMode.value.toUpperCase()}_${modelArea.value.replace(/[^A-Za-z0-9]+/g, '_')}_${geographyType.value}_${scenarioYear.value}_${activeColumn.value}.csv`
     link.click()
     URL.revokeObjectURL(url)
   } catch (error) {
@@ -1119,6 +1234,12 @@ watch(activeColumn, () => {
   syncUrlState()
 })
 watch(modelArea, () => {
+  activeTazProperties.value = null
+  ensureAvailableMetricSelection()
+  refreshDataLayer({ fit: true })
+  syncUrlState()
+})
+watch(geographyType, () => {
   activeTazProperties.value = null
   ensureAvailableMetricSelection()
   refreshDataLayer({ fit: true })

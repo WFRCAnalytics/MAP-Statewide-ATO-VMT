@@ -39,6 +39,10 @@ export const MODEL_AREAS = [
   'Summit Wasatch',
   'Iron',
 ]
+export const GEOGRAPHY_LEVELS = [
+  { label: 'TAZ', value: 'TAZ', icon: 'fa-draw-polygon' },
+  { label: 'City', value: 'CITY', icon: 'fa-city' },
+]
 
 export const ACCESS_TARGETS = [
   { label: 'Jobs', value: 'Job', icon: 'fa-briefcase' },

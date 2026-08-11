@@ -2,15 +2,15 @@
   <section class="sidebar-trend-panel">
     <div class="sidebar-panel-heading">
       <i class="fa-solid fa-chart-line"></i>
-      <span>TAZ Trend</span>
+      <span>{{ geographyLabel }} Trend</span>
       <small>{{ datasetLabel }}</small>
     </div>
 
     <div v-if="properties" class="sidebar-trend-body">
       <div class="sidebar-taz-summary">
         <div>
-          <span>CO_TAZID</span>
-          <strong>{{ tazId }}</strong>
+          <span>{{ geographyLabel }}</span>
+          <strong>{{ geographyName }}</strong>
         </div>
         <div>
           <span>{{ scenarioYear }}</span>
@@ -62,7 +62,7 @@
 
     <div v-else class="sidebar-trend-empty">
       <i class="fa-solid fa-location-crosshairs"></i>
-      <span>Hover over a TAZ</span>
+      <span>Hover over a {{ geographyLabel.toLowerCase() }}</span>
     </div>
   </section>
 </template>
@@ -77,6 +77,7 @@ import {
 const props = defineProps({
   properties: { type: Object, default: null },
   datasetLabel: { type: String, default: 'ATO' },
+  geographyType: { type: String, default: 'TAZ' },
   modelArea: { type: String, required: true },
   scenarioYear: { type: Number, required: true },
   scenarioYears: { type: Array, default: () => [] },
@@ -84,8 +85,16 @@ const props = defineProps({
   metricLabel: { type: String, required: true },
 })
 
-const tazId = computed(() => (
-  props.properties?.CO_TAZID
+const geographyLabel = computed(() => (
+  props.geographyType === 'CITY'
+    ? 'City'
+    : 'TAZ'
+))
+
+const geographyName = computed(() => (
+  props.properties?.GeographyName
+    ?? props.properties?.geographyname
+    ?? props.properties?.CO_TAZID
     ?? props.properties?.co_tazid
     ?? props.properties?.tazid
     ?? 'Unknown'

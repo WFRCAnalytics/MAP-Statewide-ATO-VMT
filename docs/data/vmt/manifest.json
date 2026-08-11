@@ -1,11 +1,15 @@
 {
-  "generated_at": "2026-08-10T21:55:18.429130+00:00",
+  "generated_at": "2026-08-10T23:05:24.658199+00:00",
   "dataset": "vmt",
   "dataset_label": "VMT",
   "dataset_title": "Vehicle Miles Traveled",
   "model_areas": [
     "Statewide",
     "Wasatch Front"
+  ],
+  "geography_types": [
+    "TAZ",
+    "CITY"
   ],
   "scenario_years": [
     2019,
@@ -25,7 +29,6 @@
     ]
   },
   "metrics": [
-    "A_DY_ALL",
     "A_DY_BUS",
     "A_DY_HBC",
     "A_DY_HBO",
@@ -40,7 +43,6 @@
     "A_DY_PERSON_ALL",
     "A_DY_REC",
     "A_DY_TRUCK_ALL",
-    "P_DY_ALL",
     "P_DY_BUS",
     "P_DY_HBC",
     "P_DY_HBO",
@@ -210,11 +212,145 @@
     ]
   },
   "metric_ranges": {
-    "2019|Statewide": {
-      "A_DY_ALL": {
+    "2019|Statewide|CITY": {
+      "A_DY_BUS": {
         "min": 0.0,
-        "max": 1592685.78
+        "max": 34703.39
       },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 283741.7
+      },
+      "A_DY_HBO": {
+        "min": 0.0,
+        "max": 4666164.58
+      },
+      "A_DY_HBS": {
+        "min": 0.0,
+        "max": 74897.55
+      },
+      "A_DY_HBW": {
+        "min": 0.0,
+        "max": 5020894.87
+      },
+      "A_DY_HV": {
+        "min": 0.0,
+        "max": 657810.12
+      },
+      "A_DY_LT": {
+        "min": 0.0,
+        "max": 1150110.92
+      },
+      "A_DY_MD": {
+        "min": 0.0,
+        "max": 939698.14
+      },
+      "A_DY_NHB": {
+        "min": 0.0,
+        "max": 2252646.56
+      },
+      "A_DY_OTH": {
+        "min": 0.0,
+        "max": 179325.46
+      },
+      "A_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 350295.01
+      },
+      "A_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 12263564.25
+      },
+      "A_DY_REC": {
+        "min": 0.0,
+        "max": 349523.68
+      },
+      "A_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 2747619.18
+      },
+      "P_DY_BUS": {
+        "min": 0.0,
+        "max": 14585.82
+      },
+      "P_DY_HBC": {
+        "min": 0.0,
+        "max": 41997.380000000005
+      },
+      "P_DY_HBO": {
+        "min": 0.0,
+        "max": 1421596.92
+      },
+      "P_DY_HBS": {
+        "min": 0.0,
+        "max": 90246.65
+      },
+      "P_DY_HBW": {
+        "min": 0.0,
+        "max": 837715.1
+      },
+      "P_DY_HV": {
+        "min": 0.0,
+        "max": 613048.34
+      },
+      "P_DY_LT": {
+        "min": 0.0,
+        "max": 1009629.33
+      },
+      "P_DY_MD": {
+        "min": 0.0,
+        "max": 858790.37
+      },
+      "P_DY_NHB": {
+        "min": 0.0,
+        "max": 1960689.41
+      },
+      "P_DY_OTH": {
+        "min": 0.0,
+        "max": 128078.31
+      },
+      "P_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 158791.24
+      },
+      "P_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 3760905.84
+      },
+      "P_DY_REC": {
+        "min": 0.0,
+        "max": 53536.43
+      },
+      "P_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 2481468.04
+      },
+      "A_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_XI": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_IX": {
+        "min": 0.0,
+        "max": 0.0
+      }
+    },
+    "2019|Statewide|TAZ": {
       "A_DY_BUS": {
         "min": 0.0,
         "max": 6083.08
@@ -270,10 +406,6 @@
       "A_DY_TRUCK_ALL": {
         "min": 0.0,
         "max": 132628.53
-      },
-      "P_DY_ALL": {
-        "min": 0.0,
-        "max": 290939.06
       },
       "P_DY_BUS": {
         "min": 0.0,
@@ -356,11 +488,145 @@
         "max": 0.0
       }
     },
-    "2019|Wasatch Front": {
-      "A_DY_ALL": {
+    "2019|Wasatch Front|CITY": {
+      "A_DY_BUS": {
         "min": 0.0,
-        "max": 922540.21
+        "max": 0.0
       },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 220381.84
+      },
+      "A_DY_HBO": {
+        "min": 0.0,
+        "max": 1929069.17
+      },
+      "A_DY_HBS": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_HBW": {
+        "min": 0.0,
+        "max": 3802222.35
+      },
+      "A_DY_HV": {
+        "min": 0.0,
+        "max": 418080.08
+      },
+      "A_DY_LT": {
+        "min": 0.0,
+        "max": 952708.96
+      },
+      "A_DY_MD": {
+        "min": 0.0,
+        "max": 812871.34
+      },
+      "A_DY_NHB": {
+        "min": 0.0,
+        "max": 1048196.31
+      },
+      "A_DY_OTH": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 369125.57
+      },
+      "A_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 7001580.09
+      },
+      "A_DY_REC": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 2183660.38
+      },
+      "P_DY_BUS": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBC": {
+        "min": 0.0,
+        "max": 31962.7
+      },
+      "P_DY_HBO": {
+        "min": 0.0,
+        "max": 623696.41
+      },
+      "P_DY_HBS": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBW": {
+        "min": 0.0,
+        "max": 688414.67
+      },
+      "P_DY_HV": {
+        "min": 0.0,
+        "max": 387979.42
+      },
+      "P_DY_LT": {
+        "min": 0.0,
+        "max": 961636.62
+      },
+      "P_DY_MD": {
+        "min": 0.0,
+        "max": 777231.98
+      },
+      "P_DY_NHB": {
+        "min": 0.0,
+        "max": 927295.72
+      },
+      "P_DY_OTH": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 214065.06
+      },
+      "P_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 1996467.1199999999
+      },
+      "P_DY_REC": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 2126848.02
+      },
+      "A_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 13224.83
+      },
+      "A_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 18991.76
+      },
+      "A_DY_XI": {
+        "min": 0.0,
+        "max": 369125.57
+      },
+      "P_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 13021.59
+      },
+      "P_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 20115.56
+      },
+      "P_DY_IX": {
+        "min": 0.0,
+        "max": 214065.06
+      }
+    },
+    "2019|Wasatch Front|TAZ": {
       "A_DY_BUS": {
         "min": 0.0,
         "max": 0.0
@@ -416,10 +682,6 @@
       "A_DY_TRUCK_ALL": {
         "min": 0.0,
         "max": 114445.89
-      },
-      "P_DY_ALL": {
-        "min": 0.0,
-        "max": 187863.49
       },
       "P_DY_BUS": {
         "min": 0.0,
@@ -502,11 +764,145 @@
         "max": 7866.72
       }
     },
-    "2023|Statewide": {
-      "A_DY_ALL": {
+    "2023|Statewide|CITY": {
+      "A_DY_BUS": {
         "min": 0.0,
-        "max": 1693587.07
+        "max": 34617.18
       },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 291569.07
+      },
+      "A_DY_HBO": {
+        "min": 0.0,
+        "max": 5067172.91
+      },
+      "A_DY_HBS": {
+        "min": 0.0,
+        "max": 76874.64
+      },
+      "A_DY_HBW": {
+        "min": 0.0,
+        "max": 5293199.39
+      },
+      "A_DY_HV": {
+        "min": 0.0,
+        "max": 735567.65
+      },
+      "A_DY_LT": {
+        "min": 0.0,
+        "max": 1292241.66
+      },
+      "A_DY_MD": {
+        "min": 0.0,
+        "max": 1043295.25
+      },
+      "A_DY_NHB": {
+        "min": 0.0,
+        "max": 2478842.27
+      },
+      "A_DY_OTH": {
+        "min": 0.0,
+        "max": 190034.13
+      },
+      "A_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 375723.35
+      },
+      "A_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 13189354.52
+      },
+      "A_DY_REC": {
+        "min": 0.0,
+        "max": 375112.33999999997
+      },
+      "A_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 3071104.56
+      },
+      "P_DY_BUS": {
+        "min": 0.0,
+        "max": 14588.619999999999
+      },
+      "P_DY_HBC": {
+        "min": 0.0,
+        "max": 44609.51
+      },
+      "P_DY_HBO": {
+        "min": 0.0,
+        "max": 1445900.97
+      },
+      "P_DY_HBS": {
+        "min": 0.0,
+        "max": 88239.76
+      },
+      "P_DY_HBW": {
+        "min": 0.0,
+        "max": 843288.71
+      },
+      "P_DY_HV": {
+        "min": 0.0,
+        "max": 686027.92
+      },
+      "P_DY_LT": {
+        "min": 0.0,
+        "max": 1139373.32
+      },
+      "P_DY_MD": {
+        "min": 0.0,
+        "max": 953640.1
+      },
+      "P_DY_NHB": {
+        "min": 0.0,
+        "max": 2133830.65
+      },
+      "P_DY_OTH": {
+        "min": 0.0,
+        "max": 138323.45
+      },
+      "P_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 169278.91
+      },
+      "P_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 4034124.25
+      },
+      "P_DY_REC": {
+        "min": 0.0,
+        "max": 56143.24
+      },
+      "P_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 2779041.34
+      },
+      "A_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_XI": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_IX": {
+        "min": 0.0,
+        "max": 0.0
+      }
+    },
+    "2023|Statewide|TAZ": {
       "A_DY_BUS": {
         "min": 0.0,
         "max": 6024.87
@@ -562,10 +958,6 @@
       "A_DY_TRUCK_ALL": {
         "min": 0.0,
         "max": 147575.49
-      },
-      "P_DY_ALL": {
-        "min": 0.0,
-        "max": 312657.63
       },
       "P_DY_BUS": {
         "min": 0.0,
@@ -648,11 +1040,145 @@
         "max": 0.0
       }
     },
-    "2023|Wasatch Front": {
-      "A_DY_ALL": {
+    "2023|Wasatch Front|CITY": {
+      "A_DY_BUS": {
         "min": 0.0,
-        "max": 974466.03
+        "max": 0.0
       },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 225958.82
+      },
+      "A_DY_HBO": {
+        "min": 0.0,
+        "max": 2085777.25
+      },
+      "A_DY_HBS": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_HBW": {
+        "min": 0.0,
+        "max": 3979655.9
+      },
+      "A_DY_HV": {
+        "min": 0.0,
+        "max": 458859.17
+      },
+      "A_DY_LT": {
+        "min": 0.0,
+        "max": 1071285.56
+      },
+      "A_DY_MD": {
+        "min": 0.0,
+        "max": 898158.1
+      },
+      "A_DY_NHB": {
+        "min": 0.0,
+        "max": 1146651.08
+      },
+      "A_DY_OTH": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 401213.85
+      },
+      "A_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 7452121.25
+      },
+      "A_DY_REC": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 2428302.83
+      },
+      "P_DY_BUS": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBC": {
+        "min": 0.0,
+        "max": 34623.25
+      },
+      "P_DY_HBO": {
+        "min": 0.0,
+        "max": 633490.93
+      },
+      "P_DY_HBS": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBW": {
+        "min": 0.0,
+        "max": 690781.33
+      },
+      "P_DY_HV": {
+        "min": 0.0,
+        "max": 427942.44
+      },
+      "P_DY_LT": {
+        "min": 0.0,
+        "max": 1085799.94
+      },
+      "P_DY_MD": {
+        "min": 0.0,
+        "max": 859812.62
+      },
+      "P_DY_NHB": {
+        "min": 0.0,
+        "max": 1009998.0
+      },
+      "P_DY_OTH": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 233220.45
+      },
+      "P_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 2128592.54
+      },
+      "P_DY_REC": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 2373555.0
+      },
+      "A_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 13110.77
+      },
+      "A_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 18709.15
+      },
+      "A_DY_XI": {
+        "min": 0.0,
+        "max": 401213.85
+      },
+      "P_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 13231.37
+      },
+      "P_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 19687.16
+      },
+      "P_DY_IX": {
+        "min": 0.0,
+        "max": 233220.45
+      }
+    },
+    "2023|Wasatch Front|TAZ": {
       "A_DY_BUS": {
         "min": 0.0,
         "max": 0.0
@@ -708,10 +1234,6 @@
       "A_DY_TRUCK_ALL": {
         "min": 0.0,
         "max": 123269.67
-      },
-      "P_DY_ALL": {
-        "min": 0.0,
-        "max": 201904.84
       },
       "P_DY_BUS": {
         "min": 0.0,
@@ -794,11 +1316,145 @@
         "max": 8289.4
       }
     },
-    "2028|Statewide": {
-      "A_DY_ALL": {
+    "2028|Statewide|CITY": {
+      "A_DY_BUS": {
         "min": 0.0,
-        "max": 1712291.14
+        "max": 37153.98
       },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 321190.54
+      },
+      "A_DY_HBO": {
+        "min": 0.0,
+        "max": 5553329.31
+      },
+      "A_DY_HBS": {
+        "min": 0.0,
+        "max": 77640.25
+      },
+      "A_DY_HBW": {
+        "min": 0.0,
+        "max": 6292983.32
+      },
+      "A_DY_HV": {
+        "min": 0.0,
+        "max": 808100.82
+      },
+      "A_DY_LT": {
+        "min": 0.0,
+        "max": 1408699.22
+      },
+      "A_DY_MD": {
+        "min": 0.0,
+        "max": 1140201.61
+      },
+      "A_DY_NHB": {
+        "min": 0.0,
+        "max": 2748761.76
+      },
+      "A_DY_OTH": {
+        "min": 0.0,
+        "max": 204848.93
+      },
+      "A_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 404851.4
+      },
+      "A_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 14944192.05
+      },
+      "A_DY_REC": {
+        "min": 0.0,
+        "max": 404242.32
+      },
+      "A_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 3357001.65
+      },
+      "P_DY_BUS": {
+        "min": 0.0,
+        "max": 16421.73
+      },
+      "P_DY_HBC": {
+        "min": 0.0,
+        "max": 47172.78
+      },
+      "P_DY_HBO": {
+        "min": 0.0,
+        "max": 1480570.76
+      },
+      "P_DY_HBS": {
+        "min": 0.0,
+        "max": 94284.29
+      },
+      "P_DY_HBW": {
+        "min": 0.0,
+        "max": 905532.66
+      },
+      "P_DY_HV": {
+        "min": 0.0,
+        "max": 747270.19
+      },
+      "P_DY_LT": {
+        "min": 0.0,
+        "max": 1241168.03
+      },
+      "P_DY_MD": {
+        "min": 0.0,
+        "max": 1037508.35
+      },
+      "P_DY_NHB": {
+        "min": 0.0,
+        "max": 2383342.69
+      },
+      "P_DY_OTH": {
+        "min": 0.0,
+        "max": 145681.94999999998
+      },
+      "P_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 175412.96
+      },
+      "P_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 4415783.93
+      },
+      "P_DY_REC": {
+        "min": 0.0,
+        "max": 62650.52
+      },
+      "P_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 3025946.57
+      },
+      "A_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_XI": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_IX": {
+        "min": 0.0,
+        "max": 0.0
+      }
+    },
+    "2028|Statewide|TAZ": {
       "A_DY_BUS": {
         "min": 0.0,
         "max": 6314.389999999999
@@ -854,10 +1510,6 @@
       "A_DY_TRUCK_ALL": {
         "min": 0.0,
         "max": 150149.93
-      },
-      "P_DY_ALL": {
-        "min": 0.0,
-        "max": 327324.74
       },
       "P_DY_BUS": {
         "min": 0.0,
@@ -940,11 +1592,145 @@
         "max": 0.0
       }
     },
-    "2028|Wasatch Front": {
-      "A_DY_ALL": {
+    "2028|Wasatch Front|CITY": {
+      "A_DY_BUS": {
         "min": 0.0,
-        "max": 980234.1
+        "max": 0.0
       },
+      "A_DY_HBC": {
+        "min": 0.0,
+        "max": 246408.03999999998
+      },
+      "A_DY_HBO": {
+        "min": 0.0,
+        "max": 2282256.8
+      },
+      "A_DY_HBS": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_HBW": {
+        "min": 0.0,
+        "max": 4646288.97
+      },
+      "A_DY_HV": {
+        "min": 0.0,
+        "max": 503297.67
+      },
+      "A_DY_LT": {
+        "min": 0.0,
+        "max": 1158825.55
+      },
+      "A_DY_MD": {
+        "min": 0.0,
+        "max": 973742.29
+      },
+      "A_DY_NHB": {
+        "min": 0.0,
+        "max": 1269365.21
+      },
+      "A_DY_OTH": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 455917.39
+      },
+      "A_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 8434307.01
+      },
+      "A_DY_REC": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "A_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 2635865.51
+      },
+      "P_DY_BUS": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBC": {
+        "min": 0.0,
+        "max": 36112.58
+      },
+      "P_DY_HBO": {
+        "min": 0.0,
+        "max": 648366.43
+      },
+      "P_DY_HBS": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_HBW": {
+        "min": 0.0,
+        "max": 743657.21
+      },
+      "P_DY_HV": {
+        "min": 0.0,
+        "max": 466321.91
+      },
+      "P_DY_LT": {
+        "min": 0.0,
+        "max": 1182984.49
+      },
+      "P_DY_MD": {
+        "min": 0.0,
+        "max": 936138.42
+      },
+      "P_DY_NHB": {
+        "min": 0.0,
+        "max": 1126388.93
+      },
+      "P_DY_OTH": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_OTHER_ALL": {
+        "min": 0.0,
+        "max": 260327.11000000002
+      },
+      "P_DY_PERSON_ALL": {
+        "min": 0.0,
+        "max": 2318234.05
+      },
+      "P_DY_REC": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "P_DY_TRUCK_ALL": {
+        "min": 0.0,
+        "max": 2585444.82
+      },
+      "A_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 13074.05
+      },
+      "A_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 18544.69
+      },
+      "A_DY_XI": {
+        "min": 0.0,
+        "max": 455917.39
+      },
+      "P_DY_HBS_Pr": {
+        "min": 0.0,
+        "max": 12849.41
+      },
+      "P_DY_HBS_Sc": {
+        "min": 0.0,
+        "max": 19213.97
+      },
+      "P_DY_IX": {
+        "min": 0.0,
+        "max": 260327.11000000002
+      }
+    },
+    "2028|Wasatch Front|TAZ": {
       "A_DY_BUS": {
         "min": 0.0,
         "max": 0.0
@@ -1000,10 +1786,6 @@
       "A_DY_TRUCK_ALL": {
         "min": 0.0,
         "max": 121943.53
-      },
-      "P_DY_ALL": {
-        "min": 0.0,
-        "max": 208092.25
       },
       "P_DY_BUS": {
         "min": 0.0,
@@ -1088,24 +1870,30 @@
     }
   },
   "record_counts": {
-    "2019|Statewide": 9815,
-    "2019|Wasatch Front": 3468,
-    "2023|Statewide": 9815,
-    "2023|Wasatch Front": 3468,
-    "2028|Statewide": 9815,
-    "2028|Wasatch Front": 3468
+    "2019|Statewide|CITY": 316,
+    "2019|Statewide|TAZ": 9815,
+    "2019|Wasatch Front|CITY": 103,
+    "2019|Wasatch Front|TAZ": 3468,
+    "2023|Statewide|CITY": 316,
+    "2023|Statewide|TAZ": 9815,
+    "2023|Wasatch Front|CITY": 103,
+    "2023|Wasatch Front|TAZ": 3468,
+    "2028|Statewide|CITY": 316,
+    "2028|Statewide|TAZ": 9815,
+    "2028|Wasatch Front|CITY": 103,
+    "2028|Wasatch Front|TAZ": 3468
   },
   "bounds": [
     -114.05280297187916,
     36.99765748027139,
-    -109.0417845699252,
+    -109.04157178176531,
     42.00170207959738
   ],
   "model_area_bounds": {
     "Statewide": [
       -114.05280297187916,
       36.99765748027139,
-      -109.0417845699252,
+      -109.04157178176531,
       42.00170207959738
     ],
     "Wasatch Front": [
@@ -1116,8 +1904,8 @@
     ]
   },
   "model_area_feature_counts": {
-    "Statewide": 9815,
-    "Wasatch Front": 3468
+    "Statewide": 10131,
+    "Wasatch Front": 3571
   },
   "files": {
     "metrics": "vmt/vmt_metrics.parquet",
@@ -1128,10 +1916,10 @@
     "source_layer": "vmt_taz",
     "minzoom": 0,
     "maxzoom": 10,
-    "feature_model": "wide_taz_by_model_area_year_pa_daily_purpose_normalized",
-    "feature_count": 13283,
-    "simplify_tolerance": 0.00071,
-    "property_template": null,
+    "feature_model": "wide_geography_by_model_area_year_pa_daily_purpose_normalized",
+    "feature_count": 13702,
+    "simplify_tolerance": 0.0012,
+    "property_template": "y{ScenarioYear}_{MetricColumn}",
     "normalized_property_template": "y{ScenarioYear}_{MetricColumn}_norm",
     "availability_property_template": "y{ScenarioYear}_{MetricColumn}_has",
     "metric_value_source": "parquet"
@@ -1140,15 +1928,15 @@
     "source_layer": "vmt_taz_boundary",
     "minzoom": 0,
     "maxzoom": 11,
-    "feature_count": 13283,
+    "feature_count": 13702,
     "simplify_tolerance": 0.00015,
     "simplification_method": "per_taz_boundary"
   },
   "build": {
-    "metrics_fingerprint": "b2b4253bc916ffb3851940e7cff31ef0a5ad5924e122b352040e42cc2dbe478e",
-    "tiles_fingerprint": "d560c57a97fd2c9ec60d8f7d17cb4b4fb3bcd3ec193de27ab15a37a3229d1c39",
-    "metrics_build_version": 4,
-    "tiles_build_version": 6,
+    "metrics_fingerprint": "7cfc7fba829a12a30d5418805145059608f9b4e8d31cab68a6822003fa4e68ad",
+    "tiles_fingerprint": "27f019c75088735a3c119461801c8df0e62c62431013aac09a93f54bf09c4669",
+    "metrics_build_version": 6,
+    "tiles_build_version": 8,
     "metrics_status": "rebuilt",
     "tiles_status": "rebuilt"
   }

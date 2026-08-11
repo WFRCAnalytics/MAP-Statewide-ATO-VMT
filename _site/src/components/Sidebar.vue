@@ -35,7 +35,25 @@
         </option>
       </select>
 
-      <span v-if="datasetMode === 'ato'" class="step-header">Step 3: Choose Accessibility</span>
+      <span class="step-header">Step 3: Select Geography</span>
+      <div class="segmented-control geography-control">
+        <button
+          v-for="level in geographyLevels"
+          :key="level.value"
+          class="segmented-button"
+          :class="{ active: geographyType === level.value }"
+          :title="level.label"
+          @click="$emit('update:geographyType', level.value)"
+        >
+          <i :class="`fa-solid ${level.icon}`"></i>
+          <span>{{ level.label }}</span>
+        </button>
+      </div>
+      <div v-if="datasetMode === 'ato' && geographyType === 'CITY'" class="geography-note">
+        City ATO values are simple averages of the included TAZ values.
+      </div>
+
+      <span v-if="datasetMode === 'ato'" class="step-header">Step 4: Choose Accessibility</span>
       <div v-if="datasetMode === 'ato'" class="segmented-control">
         <button
           v-for="target in ACCESS_TARGETS"
@@ -54,7 +72,7 @@
         </button>
       </div>
 
-      <span v-if="datasetMode === 'ato'" class="step-header">Step 4: Choose Travel Mode</span>
+      <span v-if="datasetMode === 'ato'" class="step-header">Step 5: Choose Travel Mode</span>
       <div v-if="datasetMode === 'ato'" class="mode-grid travel-mode-row">
         <button
           v-for="mode in TRAVEL_MODES"
@@ -73,7 +91,7 @@
         </button>
       </div>
 
-      <span v-if="datasetMode === 'vmt'" class="step-header">Step 3: Choose VMT Direction</span>
+      <span v-if="datasetMode === 'vmt'" class="step-header">Step 4: Choose VMT Direction</span>
       <div v-if="datasetMode === 'vmt'" class="segmented-control">
         <button
           v-for="pa in VMT_PA_OPTIONS"
@@ -88,40 +106,41 @@
         </button>
       </div>
 
-      <span v-if="datasetMode === 'vmt'" class="step-header">Step 4: Choose Purpose</span>
-      <select
-        v-if="datasetMode === 'vmt'"
-        class="lu-select"
-        :value="vmtPurposeGroup"
-        @change="$emit('update:vmtPurposeGroup', $event.target.value)"
-      >
-        <option
-          v-for="group in vmtPurposeGroups"
-          :key="group.value"
-          :value="group.value"
+      <span v-if="datasetMode === 'vmt'" class="step-header">Step 5: Choose Purpose</span>
+      <div v-if="datasetMode === 'vmt'" class="vmt-purpose-row">
+        <select
+          class="lu-select"
+          :value="vmtPurposeGroup"
+          @change="$emit('update:vmtPurposeGroup', $event.target.value)"
         >
-          {{ group.label }}
-        </option>
-      </select>
-      <select
-        v-if="datasetMode === 'vmt'"
-        class="lu-select"
-        :value="vmtPurpose"
-        @change="$emit('update:vmtPurpose', $event.target.value)"
-      >
-        <option
-          v-for="purpose in vmtPurposes"
-          :key="purpose.value"
-          :value="purpose.value"
-          :disabled="disabledVmtPurposes[purpose.value]"
+          <option
+            v-for="group in vmtPurposeGroups"
+            :key="group.value"
+            :value="group.value"
+          >
+            {{ group.label }}
+          </option>
+        </select>
+        <select
+          class="lu-select"
+          :value="vmtPurpose"
+          @change="$emit('update:vmtPurpose', $event.target.value)"
         >
-          {{ purpose.label }}
-        </option>
-      </select>
+          <option
+            v-for="purpose in vmtPurposes"
+            :key="purpose.value"
+            :value="purpose.value"
+            :disabled="disabledVmtPurposes[purpose.value]"
+          >
+            {{ purpose.label }}
+          </option>
+        </select>
+      </div>
 
       <TrendChart
         :properties="activeTazProperties"
         :dataset-label="datasetLabel"
+        :geography-type="geographyType"
         :model-area="modelArea"
         :scenario-year="scenarioYear"
         :scenario-years="trendScenarioYears"
@@ -130,14 +149,6 @@
       />
 
       <hr class="sidebar-hr" />
-
-      <div class="data-status">
-        <div class="data-status-icon"><i class="fa-solid fa-database"></i></div>
-        <div>
-          <div class="data-status-title">{{ modelArea }} {{ datasetMode.toUpperCase() }} loaded</div>
-          <p>{{ recordCount.toLocaleString() }} TAZ records available for the current selection.</p>
-        </div>
-      </div>
     </div>
   </aside>
 </template>
@@ -147,6 +158,7 @@ import TrendChart from './TrendChart.vue'
 import {
   ACCESS_TARGETS,
   DATASETS,
+  GEOGRAPHY_LEVELS,
   MODEL_AREAS,
   SCENARIO_YEARS,
   TRAVEL_MODES,
@@ -161,6 +173,8 @@ defineProps({
   modelAreas: { type: Array, default: () => MODEL_AREAS },
   scenarioYear: { type: Number, required: true },
   modelArea: { type: String, required: true },
+  geographyType: { type: String, default: 'TAZ' },
+  geographyLevels: { type: Array, default: () => GEOGRAPHY_LEVELS },
   disabledModelAreas: { type: Object, default: () => ({}) },
   accessTarget: { type: String, required: true },
   travelMode: { type: String, required: true },
@@ -184,6 +198,7 @@ defineEmits([
   'update:datasetMode',
   'update:scenarioYear',
   'update:modelArea',
+  'update:geographyType',
   'update:accessTarget',
   'update:travelMode',
   'update:vmtPa',

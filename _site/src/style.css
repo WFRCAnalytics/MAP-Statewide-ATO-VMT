@@ -170,6 +170,28 @@ h1, h2, h3, h4, h5 {
   padding: 7px 4px;
 }
 
+.vmt-purpose-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.vmt-purpose-row .lu-select {
+  margin-bottom: 0;
+}
+
+.geography-note {
+  margin: -2px 0 12px;
+  padding: 8px 10px;
+  border: 1px solid #d7e4f2;
+  border-radius: 6px;
+  background: #f6faff;
+  color: #506070;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 .sidebar-hr { border: none; border-top: 1px solid #dee2e6; margin: 10px 0; }
 
 .accordion { margin-bottom: 8px; }
@@ -236,6 +258,28 @@ h1, h2, h3, h4, h5 {
   margin-bottom: 3px;
 }
 .data-status p { font-size: 0.86rem; line-height: 1.45; }
+
+.active-metric-description {
+  flex-shrink: 0;
+  padding: 8px 14px 10px;
+  background: #f8fbff;
+  border-bottom: 1px solid #dbe5ef;
+}
+.active-metric-description-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #5c7084;
+  margin-bottom: 2px;
+}
+.active-metric-description-text {
+  color: #233A57;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
 
 .sidebar-trend-panel {
   border: 1px solid #dee2e6;
@@ -839,9 +883,13 @@ h1, h2, h3, h4, h5 {
   #map-area { min-height: 58vh; }
   #navbar span { font-size: 1.15rem; }
   #map-controls-bar { gap: 6px; }
+  .active-metric-description-text { font-size: 0.9rem; }
   .empty-state { max-width: calc(100% - 24px); width: max-content; }
   #overview-map-panel { width: 158px; height: 124px; bottom: 26px; }
   #map-area.overview-visible #pinned-tooltip-container { bottom: 166px; }
+  .vmt-purpose-row {
+    grid-template-columns: 1fr;
+  }
   .map-attribution-inline {
     left: 10px;
     right: 10px;
