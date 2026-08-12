@@ -343,10 +343,6 @@ const activePalette = computed(() => (
   datasetMode.value === 'vmt' ? VMT_PALETTE : ACCESS_PALETTE
 ))
 const quantilePalette = computed(() => {
-  if (datasetMode.value === 'vmt') {
-    return ['#a6bddb', '#67a9cf', '#3690c0', '#1f8aab', '#02818a']
-  }
-
   const palette = activePalette.value.length ? activePalette.value : ACCESS_PALETTE
   if (palette.length <= 5) return palette
   return [0, 0.25, 0.5, 0.75, 1].map((ratio) => (
@@ -692,7 +688,7 @@ function addDatasetLayers(map, datasetId, manifest, firstLabelId) {
       minzoom: 6,
       layout: { visibility: getLineVisibility(datasetId) },
       paint: {
-        'line-color': '#98a8b8',
+        'line-color': buildBoundaryColorExpression(),
         'line-width': [
           'interpolate',
           ['linear'],
@@ -1014,6 +1010,16 @@ function buildMetricColorExpression() {
     buildColorRampExpression(['to-number', ['get', `${valueColumn}_norm`]]),
     '#d9d9d9',
   ]
+}
+
+function buildBoundaryColorExpression() {
+  const maskExpression = ['==', ['to-number', ['coalesce', ['get', 'StatewideVmtMasked'], 0]], 1]
+
+  if (datasetMode.value === 'vmt' && modelArea.value === 'Statewide') {
+    return ['case', maskExpression, '#ffffff', '#98a8b8']
+  }
+
+  return '#98a8b8'
 }
 
 function buildColorRampExpression(inputExpression, minStop = 0, maxStop = 1) {

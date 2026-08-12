@@ -89,6 +89,9 @@ def build_boundary_features(geometries: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         "GeographyId",
         "GeographyName",
         "CO_TAZID",
+        *[
+            column for column in geometries.columns if column == "StatewideVmtMasked"
+        ],
         *[column for column in geometries.columns if column.endswith("_has")],
         "geometry",
     ]
