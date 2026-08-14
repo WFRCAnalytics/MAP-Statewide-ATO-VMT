@@ -3,7 +3,7 @@
     <div class="modal-box">
       <div class="splash-header">
         <img :src="logoUrl" alt="WFRC Logo" />
-        <h2>Statewide ATO and VMT Explorer</h2>
+        <h2>DRAFT Statewide ATO and VMT Explorer</h2>
       </div>
       <div class="splash-body">
         <p>Utah statewide access-to-opportunities and vehicle-miles-traveled analysis.</p>
