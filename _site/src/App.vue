@@ -1,7 +1,10 @@
 <template>
   <nav id="navbar">
     <img :src="logoUrl" alt="WFRC" />
-    <span>Statewide ATO and VMT Explorer</span>
+    <div class="navbar-title-group">
+      <span class="navbar-title">DRAFT STATEWIDE ATO AND VMT EXPLORER</span>
+      <span class="navbar-subtitle">(test dataset shown)</span>
+    </div>
     <button class="navbar-info-button" type="button" @click="showSplash = true" aria-label="Open site information">
       <i class="fa-solid fa-circle-info"></i>
     </button>

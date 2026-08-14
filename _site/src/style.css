@@ -29,12 +29,25 @@ h1, h2, h3, h4, h5 {
   flex-shrink: 0;
 }
 #navbar img { height: 35px; margin-right: 0; }
-#navbar span {
+.navbar-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.navbar-title {
   font-family: 'Oswald', sans-serif;
   font-weight: 700;
   color: white;
   font-size: 1.5rem;
   text-transform: uppercase;
+}
+.navbar-subtitle {
+  color: rgba(255,255,255,0.82);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 .navbar-info-button {
   margin-left: auto;
@@ -910,7 +923,9 @@ h1, h2, h3, h4, h5 {
   #app-layout { flex-direction: column; }
   #sidebar { width: 100%; max-height: 42vh; border-right: none; border-bottom: 1px solid #dee2e6; }
   #map-area { min-height: 58vh; }
-  #navbar span { font-size: 1.15rem; }
+  .navbar-title-group { flex-wrap: wrap; row-gap: 2px; }
+  .navbar-title { font-size: 1.15rem; }
+  .navbar-subtitle { font-size: 0.68rem; }
   #map-controls-bar { gap: 6px; }
   .active-metric-description-text { font-size: 0.9rem; }
   .empty-state { max-width: calc(100% - 24px); width: max-content; }
